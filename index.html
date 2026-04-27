@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>モヒカン・チャンバラ</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+    html,body{width:100%;height:100%;background:#000;overflow:hidden}
+    #game{
+      width:100%;height:100%;max-width:480px;margin:0 auto;
+      position:relative;overflow:hidden;
+      font-family:'Hiragino Kaku Gothic ProN','ヒラギノ角ゴシック',monospace;
+      color:#fff;
+    }
+    .screen{position:absolute;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;overflow:hidden}
+    .screen.active{display:flex}
+
+    /* ===== TITLE ===== */
+    #sc-title{
+      background:radial-gradient(ellipse at 50% 30%,#1a0000 0%,#000 70%);
+      align-items:center;justify-content:center;
+    }
+    .title-wrap{display:flex;flex-direction:column;align-items:center;text-align:center}
+    .title-deco{font-size:3.5rem;margin-bottom:0.3em;animation:spin 8s linear infinite}
+    @keyframes spin{0%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}100%{transform:rotate(-5deg)}}
+    .title-main{font-size:2.6rem;font-weight:900;color:#ff3300;letter-spacing:0.05em;line-height:1.1;text-shadow:0 0 30px #ff3300}
+    .title-sub{font-size:0.9rem;color:#ff7700;margin-top:0.3em;letter-spacing:0.3em}
+    .title-year{font-size:0.75rem;color:#555;margin-top:1.5em;font-style:italic}
+    .btn-start{
+      margin-top:2.5em;padding:0.9em 3em;font-size:1.1rem;font-weight:700;
+      background:#ff3300;color:#fff;border:none;border-radius:4px;cursor:pointer;
+      letter-spacing:0.2em;animation:blink 1s step-end infinite;
+    }
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+
+    /* ===== STORY ===== */
+    #sc-story{background:#000;justify-content:flex-end}
+    .story-bg{flex:1;display:flex;align-items:center;justify-content:center;font-size:5rem;padding-bottom:20px}
+    .story-box{border:2px solid #ff3300;background:rgba(0,0,0,0.95);padding:16px;min-height:180px;position:relative}
+    .story-name{color:#ff9900;font-weight:700;font-size:0.85rem;margin-bottom:8px}
+    .story-text{font-size:0.9rem;line-height:1.8;color:#fff;white-space:pre-wrap;min-height:60px}
+    .story-hint{position:absolute;bottom:10px;right:12px;color:#555;font-size:0.75rem}
+
+    /* ===== MAP ===== */
+    #sc-map{background:#070012;padding:16px}
+    .map-hdr{text-align:center;font-size:1rem;font-weight:700;color:#ff9900;margin-bottom:14px}
+    .map-list{flex:1;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
+    .map-node{display:flex;align-items:center;gap:12px;padding:12px 14px;border:2px solid #333;border-radius:6px}
+    .map-node.avail{border-color:#ff3300;background:rgba(255,51,0,0.08);cursor:pointer}
+    .map-node.avail:active{background:rgba(255,51,0,0.25)}
+    .map-node.done{opacity:0.4}
+    .map-node.lock{opacity:0.25}
+    .nd-icon{font-size:1.8rem;width:44px;text-align:center}
+    .nd-info{flex:1}
+    .nd-name{font-size:0.9rem;font-weight:700}
+    .nd-sub{font-size:0.7rem;color:#888;margin-top:2px}
+    .nd-st{font-size:0.8rem;color:#ff9900}
+    .map-party{border-top:1px solid #222;padding-top:12px;margin-top:8px}
+    .party-lbl{font-size:0.75rem;color:#555;margin-bottom:6px}
+    .party-row{display:flex;gap:6px}
+    .pc{flex:1;border:1px solid #333;border-radius:4px;padding:6px;font-size:0.65rem;text-align:center}
+    .pc-n{color:#ff9900;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pc-h{color:#44ff44}
+
+    /* ===== SELECT ===== */
+    #sc-select{background:#000a14;padding:14px}
+    .sel-title{text-align:center;font-size:1rem;font-weight:700;color:#44aaff;margin-bottom:3px}
+    .sel-sub{text-align:center;font-size:0.72rem;color:#555;margin-bottom:12px}
+    .mk-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px;overflow-y:auto;padding-bottom:4px}
+    .mk-card{border:2px solid #2a2a2a;border-radius:6px;padding:10px;cursor:pointer;position:relative;background:#050505}
+    .mk-card:active{transform:scale(0.97)}
+    .mk-card.s1{border-color:#ff4444;background:rgba(255,68,68,0.08)}
+    .mk-card.s2{border-color:#ffaa44;background:rgba(255,170,68,0.08)}
+    .mk-card.s3{border-color:#44ff44;background:rgba(68,255,68,0.08)}
+    .mk-badge{position:absolute;top:5px;right:5px;width:17px;height:17px;border-radius:50%;font-size:0.65rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+    .b1{background:#ff4444}.b2{background:#ffaa44}.b3{background:#44ff44;color:#000}
+    .mk-name{font-size:0.82rem;font-weight:700;margin-bottom:2px}
+    .mk-type{font-size:0.65rem;color:#888;margin-bottom:6px}
+    .mk-stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;font-size:0.62rem}
+    .ms{display:flex;justify-content:space-between;padding:1px 0}
+    .ms-l{color:#666}.ms-v{font-weight:700}
+    .mk-prev{width:100%;height:55px;margin-bottom:6px;display:block}
+    .sel-foot{margin-top:10px}
+    .btn-conf{width:100%;padding:12px;font-size:0.95rem;font-weight:700;background:#44aaff;color:#000;border:none;border-radius:4px;cursor:pointer;letter-spacing:0.1em}
+    .btn-conf:disabled{background:#2a2a2a;color:#555}
+
+    /* ===== TRAINING ===== */
+    #sc-training{background:#020e02;padding:14px}
+    .tr-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .tr-title{font-size:0.95rem;font-weight:700;color:#44ff44}
+    .tr-turns{font-size:0.82rem;color:#ff9900}
+    .tr-party{display:flex;gap:6px;margin-bottom:12px}
+    .tr-card{flex:1;border:2px solid #1a2a1a;border-radius:5px;padding:7px;cursor:pointer;font-size:0.62rem}
+    .tr-card.act{border-color:#44ff44;background:rgba(68,255,68,0.07)}
+    .tr-cn{font-weight:700;color:#fff;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sb{display:flex;gap:3px;align-items:center;margin-bottom:2px}
+    .sb-l{width:18px;color:#666;font-size:0.58rem}
+    .sb-t{flex:1;height:5px;background:#1a1a1a;border-radius:2px;overflow:hidden}
+    .sb-f{height:100%;border-radius:2px;transition:width 0.3s}
+    .f-a{background:#ff4444}.f-d{background:#4488ff}.f-s{background:#44ff44}.f-h{background:#ff9900}
+    .tr-acts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;flex:1}
+    .tr-act{border:2px solid #1a2a1a;border-radius:8px;padding:8px 4px;cursor:pointer;text-align:center;background:#050a05}
+    .tr-act:active{background:rgba(68,255,68,0.1);transform:scale(0.95)}
+    .ta-icon{font-size:1.6rem}
+    .ta-name{font-size:0.65rem;font-weight:700;color:#fff;margin-top:3px}
+    .ta-eff{font-size:0.55rem;color:#888;margin-top:1px}
+    .tr-log{margin-top:8px;border:1px solid #1a2a1a;border-radius:4px;padding:7px;height:55px;overflow-y:auto;font-size:0.7rem;color:#888}
+    .lg{margin-bottom:2px}.lg-g{color:#44ff44}.lg-b{color:#ff4444}
+
+    /* ===== BATTLE ===== */
+    #sc-battle{background:#000}
+    .bt-hud{display:flex;align-items:center;padding:8px 10px 5px;gap:8px}
+    .bt-fhud{flex:1}
+    .bt-fname{font-size:0.65rem;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .hp-track{height:11px;background:#2a0000;border-radius:2px;overflow:hidden}
+    .hp-fill{height:100%;border-radius:2px;transition:width 0.1s;background:linear-gradient(90deg,#ff2200,#ff8800)}
+    .hp-fill.low{background:linear-gradient(90deg,#ff0000,#ff2200)}
+    .bt-timer{font-size:1.4rem;font-weight:900;color:#fff;min-width:28px;text-align:center}
+    .wins-row{display:flex;gap:5px;margin-top:3px}
+    .wd{width:8px;height:8px;border-radius:50%;border:1px solid #555}
+    .wd.on{background:#ff9900;border-color:#ff9900}
+    #battle-canvas{width:100%;display:block}
+    .bt-gauges{display:flex;gap:8px;padding:4px 10px}
+    .g-item{flex:1}
+    .g-lbl{font-size:0.55rem;color:#666;margin-bottom:2px}
+    .g-track{height:7px;background:#111;border-radius:3px;overflow:hidden}
+    .g-sta{background:#44ff44}
+    .g-sp{background:#ee44ee}
+    .bt-ctrl{display:flex;padding:8px 10px;gap:10px;flex:1;align-items:flex-end}
+    .bt-move{display:flex;gap:8px}
+    .bt-acts{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
+    .bb{
+      width:58px;height:58px;border-radius:50%;border:3px solid #fff;
+      font-size:0.7rem;font-weight:900;cursor:pointer;display:flex;align-items:center;
+      justify-content:center;text-align:center;line-height:1.2;background:rgba(0,0,0,0.3);
+      touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+      flex-shrink:0;
+    }
+    .bb-move{border-color:#888;color:#ccc;font-size:1.1rem}
+    .bb-atk{border-color:#ff4444;color:#ff4444;background:rgba(255,68,68,0.15)}
+    .bb-def{border-color:#4444ff;color:#6666ff;background:rgba(68,68,255,0.15)}
+    .bb-sp{border-color:#444;color:#555;background:rgba(0,0,0,0.3)}
+    .bb-sp.rdy{border-color:#ee44ee;color:#ee44ee;background:rgba(238,68,238,0.15);animation:sppulse 0.5s alternate infinite}
+    @keyframes sppulse{from{box-shadow:0 0 5px #ee44ee}to{box-shadow:0 0 20px #ee44ee}}
+    .bt-acts-row{display:flex;gap:8px;justify-content:flex-end}
+    .bt-msg{
+      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+      font-size:2rem;font-weight:900;color:#fff;text-shadow:0 0 20px #fff;
+      pointer-events:none;z-index:10;opacity:0;
+    }
+
+    /* ===== RESULT ===== */
+    #sc-result{background:#000;justify-content:center;align-items:center;text-align:center;padding:20px}
+    .res-ttl{font-size:3rem;font-weight:900;margin-bottom:0.3em}
+    .res-win{color:#ffdd00;text-shadow:0 0 30px #ffdd00}
+    .res-lose{color:#ff3300;text-shadow:0 0 30px #ff3300}
+    .res-msg{font-size:0.85rem;color:#888;margin-bottom:2em}
+    .btn-next{padding:12px 3em;font-size:0.95rem;font-weight:700;background:#ff9900;color:#000;border:none;border-radius:4px;cursor:pointer;letter-spacing:0.1em}
+
+    /* ===== ITEM GET ===== */
+    #sc-items{background:#080600;justify-content:center;align-items:center;text-align:center;padding:20px}
+    .ig-ttl{font-size:1.5rem;font-weight:900;color:#ffdd00;text-shadow:0 0 20px #ffdd00;margin-bottom:0.5em}
+    .ig-list{display:flex;flex-direction:column;gap:10px;width:90%;margin:1em 0}
+    .ig-item{border:2px solid #ffdd00;border-radius:8px;padding:12px;animation:popIn 0.4s ease-out}
+    @keyframes popIn{from{opacity:0;transform:scale(0.5)}to{opacity:1;transform:scale(1)}}
+    .ig-name{font-size:0.95rem;font-weight:700;color:#ffdd00}
+    .ig-desc{font-size:0.72rem;color:#aaa;margin-top:4px}
+
+    /* ===== CLEAR ===== */
+    #sc-clear{
+      background:radial-gradient(circle,#1a1000 0%,#000 70%);
+      justify-content:center;align-items:center;text-align:center;padding:20px;
+    }
+    .cl-ttl{font-size:2.5rem;font-weight:900;color:#ffdd00;text-shadow:0 0 40px #ffdd00;margin-bottom:0.4em}
+    .cl-sub{font-size:0.95rem;color:#ff9900;margin-bottom:1.5em}
+    .cl-msg{font-size:0.82rem;color:#aaa;line-height:1.9;margin-bottom:2em}
+
+    /* ===== GAME OVER ===== */
+    #sc-gameover{background:#000;justify-content:center;align-items:center;text-align:center;padding:20px}
+    .go-ttl{font-size:2.5rem;font-weight:900;color:#ff3300;text-shadow:0 0 40px #ff3300;margin-bottom:0.4em}
+    .go-msg{font-size:0.85rem;color:#888;margin-bottom:2em;line-height:1.8}
+
+    /* ===== COMMON ===== */
+    .btn-g{padding:10px 2.5em;font-size:0.88rem;font-weight:700;border:2px solid currentColor;border-radius:4px;cursor:pointer;background:transparent;letter-spacing:0.1em}
+    .c-red{color:#ff3300}.c-yel{color:#ffdd00}.c-grn{color:#44ff44}
+
+    /* Scanlines */
+    #game::after{
+      content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+      background:repeating-linear-gradient(0deg,rgba(0,0,0,0.04) 0px,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 2px);
+      pointer-events:none;z-index:999;
+    }
+
+    /* Item select overlay */
+    .item-overlay{
+      position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);
+      z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;
+    }
+    .io-ttl{font-size:1rem;font-weight:700;color:#ff9900;margin-bottom:14px}
+    .io-item{border:2px solid #ffdd00;border-radius:8px;padding:12px;margin-bottom:8px;width:100%;cursor:pointer;text-align:left}
+    .io-item:active{background:rgba(255,221,0,0.1)}
+    .io-name{color:#ffdd00;font-size:0.95rem;font-weight:700}
+    .io-desc{color:#aaa;font-size:0.72rem;margin-top:4px}
+    .io-cancel{margin-top:8px;padding:8px 2em;background:transparent;border:1px solid #555;color:#888;border-radius:4px;cursor:pointer;font-size:0.82rem}
+  </style>
+</head>
+<body>
+<div id="game">
+
+  <!-- TITLE -->
+  <div id="sc-title" class="screen active">
+    <div class="title-wrap">
+      <div class="title-deco">⚡🪮⚡</div>
+      <div class="title-main">モヒカン<br>チャンバラ</div>
+      <div class="title-sub">MOHIKAN CHAMBARA</div>
+      <div class="title-year">199X — 日本のモヒカンを取り戻せ</div>
+      <button class="btn-start" onclick="G.start()">START</button>
+    </div>
+  </div>
+
+  <!-- STORY -->
+  <div id="sc-story" class="screen">
+    <div class="story-bg" id="st-portrait"></div>
+    <div class="story-box">
+      <div class="story-name" id="st-name"></div>
+      <div class="story-text" id="st-text"></div>
+      <div class="story-hint">タップで次へ ▼</div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div id="sc-map" class="screen">
+    <div class="map-hdr">📍 ワールドマップ</div>
+    <div class="map-list" id="map-list"></div>
+    <div class="map-party">
+      <div class="party-lbl">現在のパーティ</div>
+      <div class="party-row" id="party-row"></div>
+    </div>
+  </div>
+
+  <!-- SELECT -->
+  <div id="sc-select" class="screen">
+    <div class="sel-title">モヒカン選択</div>
+    <div class="sel-sub">対戦に出場させる3体を選んでください</div>
+    <div class="mk-grid" id="mk-grid"></div>
+    <div class="sel-foot">
+      <button class="btn-conf" id="btn-conf" onclick="G.confirmSel()" disabled>3体選んでください</button>
+    </div>
+  </div>
+
+  <!-- TRAINING -->
+  <div id="sc-training" class="screen">
+    <div class="tr-hdr">
+      <div class="tr-title">💪 育成フェーズ</div>
+      <div class="tr-turns">残り <span id="tr-turns">5</span> ターン</div>
+    </div>
+    <div class="tr-party" id="tr-party"></div>
+    <div class="tr-acts" id="tr-acts"></div>
+    <div class="tr-log" id="tr-log"></div>
+  </div>
+
+  <!-- BATTLE -->
+  <div id="sc-battle" class="screen">
+    <div class="bt-hud">
+      <div class="bt-fhud">
+        <div class="bt-fname" id="bt-pname">プレイヤー</div>
+        <div class="hp-track"><div class="hp-fill" id="bt-php" style="width:100%"></div></div>
+        <div class="wins-row" id="bt-pwins"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div class="bt-timer" id="bt-timer">60</div>
+        <div id="bt-round" style="font-size:0.55rem;color:#888;letter-spacing:0.05em;white-space:nowrap">Rd 1/3</div>
+      </div>
+      <div class="bt-fhud" style="text-align:right">
+        <div class="bt-fname" id="bt-ename" style="text-align:right">エネミー</div>
+        <div class="hp-track" style="direction:rtl"><div class="hp-fill" id="bt-ehp" style="width:100%"></div></div>
+        <div class="wins-row" id="bt-ewins" style="justify-content:flex-end"></div>
+      </div>
+    </div>
+    <canvas id="battle-canvas" width="480" height="210"></canvas>
+    <div class="bt-gauges">
+      <div class="g-item">
+        <div class="g-lbl">スタミナ</div>
+        <div class="g-track"><div class="g-sta" id="bt-psta" style="width:100%;height:100%"></div></div>
+      </div>
+      <div class="g-item">
+        <div class="g-lbl">必殺技ゲージ</div>
+        <div class="g-track"><div class="g-sp" id="bt-psp" style="width:0%;height:100%"></div></div>
+      </div>
+    </div>
+    <div class="bt-ctrl">
+      <div class="bt-move">
+        <button class="bb bb-move" id="btn-left"
+          ontouchstart="B.pressMove('L',true)" ontouchend="B.pressMove('L',false)"
+          onmousedown="B.pressMove('L',true)" onmouseup="B.pressMove('L',false)"
+          onmouseleave="B.pressMove('L',false)">◀</button>
+        <button class="bb bb-move" id="btn-right"
+          ontouchstart="B.pressMove('R',true)" ontouchend="B.pressMove('R',false)"
+          onmousedown="B.pressMove('R',true)" onmouseup="B.pressMove('R',false)"
+          onmouseleave="B.pressMove('R',false)">▶</button>
+      </div>
+      <div class="bt-acts">
+        <div class="bt-acts-row">
+          <button class="bb bb-def"
+            ontouchstart="B.action('def')" onmousedown="B.action('def')">防御<br>B</button>
+          <button class="bb bb-sp" id="btn-sp"
+            ontouchstart="B.action('sp')" onmousedown="B.action('sp')">必殺<br>S</button>
+        </div>
+        <div class="bt-acts-row">
+          <button class="bb bb-atk"
+            ontouchstart="B.action('atk')" onmousedown="B.action('atk')">攻撃<br>A</button>
+        </div>
+      </div>
+    </div>
+    <div class="bt-msg" id="bt-msg"></div>
+  </div>
+
+  <!-- ROUND RESULT -->
+  <div id="sc-result" class="screen">
+    <div class="res-ttl" id="res-ttl"></div>
+    <div class="res-msg" id="res-msg"></div>
+    <button class="btn-next" onclick="G.nextRound()">次へ →</button>
+  </div>
+
+  <!-- ITEM GET -->
+  <div id="sc-items" class="screen">
+    <div class="ig-ttl">⭐ アイテムゲット！</div>
+    <div class="ig-list" id="ig-list"></div>
+    <button class="btn-next" onclick="G.showMap()">マップへ戻る</button>
+  </div>
+
+  <!-- CLEAR -->
+  <div id="sc-clear" class="screen">
+    <div class="cl-ttl">🏆 GAME CLEAR!</div>
+    <div class="cl-sub">モヒカン教団を打ち倒した！</div>
+    <div class="cl-msg">
+      日本全国のモヒカンが解放された。<br>
+      お前は真のモヒカン戦士だ。<br><br>
+      伝説のモヒカンが<br>今また輝きを取り戻す…
+    </div>
+    <button class="btn-g c-yel" onclick="show('title')">タイトルへ</button>
+  </div>
+
+  <!-- GAME OVER -->
+  <div id="sc-gameover" class="screen">
+    <div class="go-ttl">GAME OVER</div>
+    <div class="go-msg">モヒカン教団に敗れた…<br>だが、まだあきらめるな！</div>
+    <button class="btn-g c-red" onclick="G.retry()">リトライ</button>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+
+// ============================================================
+// DATA
+// ============================================================
+
+const HEADS = [
+  {id:'round', name:'丸顔',  atk:10,def:10,sta:10,hp:100,col:'#FFCC80'},
+  {id:'sq',    name:'角顔',  atk: 8,def:14,sta:10,hp:100,col:'#FFAB40'},
+  {id:'slim',  name:'細顔',  atk:12,def: 8,sta:12,hp: 90,col:'#FFE0B2'},
+  {id:'oval',  name:'卵顔',  atk:10,def:10,sta:10,hp:120,col:'#FFA726'},
+  {id:'heart', name:'ハート顔',atk:10,def:10,sta:15,hp: 90,col:'#FFD54F'},
+  {id:'tri',   name:'逆三角顔',atk:15,def: 8,sta: 9,hp: 90,col:'#FFCA28'},
+  {id:'long',  name:'面長',  atk:11,def:11,sta:11,hp:105,col:'#FFB74D'},
+  {id:'jaw',   name:'えら顔', atk: 9,def:15,sta: 9,hp:100,col:'#FFC107'},
+  {id:'bone',  name:'頬骨顔', atk:13,def: 9,sta:11,hp: 95,col:'#FFCC80'},
+  {id:'baby',  name:'ベビー顔',atk: 8,def:10,sta:10,hp:130,col:'#FFE082'},
+];
+
+const MOHAWKS = [
+  {id:'big',     name:'ビッグモヒカン',  am: 5,dm:-2,sm: 0,col:'#FFD700',sp:'ビッグスウィング'},
+  {id:'slim',    name:'スリムモヒカン',  am: 2,dm: 2,sm: 2,col:'#00BCD4',sp:'スリムスラッシュ'},
+  {id:'color',   name:'カラーモヒカン',  am: 3,dm: 3,sm: 3,col:'#FF4081',sp:'カラーバースト'},
+  {id:'twin',    name:'ツインモヒカン',  am: 4,dm: 0,sm: 4,col:'#AB47BC',sp:'ツインストライク'},
+  {id:'micro',   name:'マイクロモヒカン',am: 1,dm: 5,sm: 3,col:'#78909C',sp:'ガードクラッシュ'},
+  {id:'wild',    name:'ワイルドモヒカン', am: 7,dm:-3,sm:-2,col:'#FF6D00',sp:'ワイルドスピン'},
+  {id:'spiral',  name:'スパイラルモヒカン',am:2,dm: 2,sm: 6,col:'#26A69A',sp:'スパイラルドリル'},
+  {id:'golden',  name:'ゴールデンモヒカン',am:4,dm: 4,sm: 4,col:'#FFD600',sp:'ゴールデンボンバー'},
+  {id:'rainbow', name:'レインボーモヒカン',am:3,dm: 3,sm: 3,col:'#E040FB',sp:'レインボーストーム'},
+  {id:'black',   name:'ブラックモヒカン', am: 1,dm: 6,sm: 1,col:'#607D8B',sp:'ブラックホール'},
+];
+
+const TR_ACTS = [
+  {id:'shampoo',  name:'シャンプー',    icon:'🧴', a: 3,d: 1,s: 1,h: 0, desc:'ATK↑↑ DEF↑ STA↑'},
+  {id:'treat',    name:'トリートメント',icon:'✨', a: 1,d: 1,s: 5,h: 0, desc:'STA↑↑↑ ATK↑ DEF↑'},
+  {id:'perm',     name:'ストパー',      icon:'💈', a: 8,d:-2,s:-2,h: 0, desc:'ATK↑↑↑↑ DEF↓ STA↓'},
+  {id:'brush',    name:'ブラシ',        icon:'🪮', a: 1,d: 3,s: 1,h: 0, desc:'DEF↑↑ ATK↑ STA↑'},
+  {id:'hairoil',  name:'ヘアオイル',    icon:'🫙', a:-2,d: 8,s:-2,h: 0, desc:'DEF↑↑↑↑ ATK↓ STA↓'},
+  {id:'item',     name:'アイテム使用',  icon:'🎒', a: 0,d: 0,s: 0,h: 0, desc:'アイテムで強化'},
+];
+
+const ITEMS_DEF = [
+  {id:'regent',  name:'リーゼントの教科書', icon:'📗', a:-10,d:15,s:15,h:0, restore:false, desc:'防御・スタミナ↑↑ 攻撃↓↓'},
+  {id:'keb',     name:'ケープ',             icon:'💨', a:15, d:-10,s: 0,h:0, restore:false, desc:'攻撃力↑↑↑ 防御↓↓'},
+  {id:'gatsby',  name:'ギャッツビーワックス',icon:'🫙', a: 0, d: 5, s: 5,h:0, restore:false, desc:'防御・スタミナ↑'},
+  {id:'aderans', name:'幻のアデランス',      icon:'💎', a: 0, d: 0, s: 0,h:0, restore:true,  desc:'マイナスのパラメータを元に戻す'},
+];
+
+const SCENARIOS = [
+  {
+    id:0, name:'教団の下っ端', sub:'最初の試練', icon:'👊',
+    enemy:{name:'ゴロ',
+      mks:[{h:'round',m:'slim'},{h:'sq',m:'micro'},{h:'slim',m:'wild'}], ai:1},
+    story:[
+      {n:'ナレーター',t:'199X年。\n日本はモヒカンブームの真っ只中にあった。\n突如現れた謎の組織「モヒカン教団」が\n日本中のモヒカンを奪い去ろうと企んでいた。',p:'📖'},
+      {n:'ゴロ',t:'へっへっへ！\nお前のモヒカン、いただくぜ！',p:'😤'},
+      {n:'主人公',t:'させるか！\nモヒカンは俺の魂だ！',p:'😠'},
+    ],
+    rewards:['gatsby','keb'], newMk:{h:'oval',m:'color'},
+  },
+  {
+    id:1, name:'教団の中堅', sub:'実力者との戦い', icon:'💢',
+    enemy:{name:'キズ',
+      mks:[{h:'tri',m:'big'},{h:'jaw',m:'twin'},{h:'long',m:'spiral'}], ai:2},
+    story:[
+      {n:'キズ',t:'フン…ゴロをやったのか。\n俺はそう甘くないぞ！',p:'😤'},
+      {n:'主人公',t:'教団に近づくためにも\nここで勝たせてもらう！',p:'😤'},
+    ],
+    rewards:['regent','gatsby'], newMk:{h:'heart',m:'golden'},
+  },
+  {
+    id:2, name:'教団の幹部', sub:'幹部との激突', icon:'🔥',
+    enemy:{name:'バラン幹部',
+      mks:[{h:'bone',m:'wild'},{h:'baby',m:'rainbow'},{h:'round',m:'golden'}], ai:2},
+    story:[
+      {n:'ナレーター',t:'ついに教団の幹部\nバランと対峙した。',p:'📖'},
+      {n:'バラン幹部',t:'フッ…よくここまで来た。\nだが私のモヒカンに\n敵う者はいない。',p:'😏'},
+      {n:'主人公',t:'日本のモヒカンを返してもらう！',p:'😠'},
+    ],
+    rewards:['keb','gatsby','aderans'], newMk:{h:'sq',m:'black'},
+  },
+  {
+    id:3, name:'教団の副ボス', sub:'最後の関門', icon:'⚡',
+    enemy:{name:'ダーク副頭',
+      mks:[{h:'slim',m:'twin'},{h:'tri',m:'golden'},{h:'jaw',m:'rainbow'}], ai:3},
+    story:[
+      {n:'ダーク副頭',t:'貴様…ここまで来るとは。\nボスには絶対に近づかせん！',p:'😈'},
+      {n:'主人公',t:'退けない！絶対に通る！',p:'😤'},
+    ],
+    rewards:['regent','aderans'], newMk:{h:'bone',m:'spiral'},
+  },
+  {
+    id:4, name:'教団のボス', sub:'最終決戦！', icon:'💀',
+    enemy:{name:'キング・モヒカン',
+      mks:[{h:'baby',m:'golden'},{h:'tri',m:'black'},{h:'round',m:'rainbow'}], ai:3},
+    story:[
+      {n:'ナレーター',t:'ついに教団のボス\nキング・モヒカンと対峙した！',p:'📖'},
+      {n:'キング・モヒカン',t:'…よく来た。だが私の前では\nすべてが無力だ！',p:'😈'},
+      {n:'主人公',t:'日本のモヒカンを取り戻す！\nここで終わらせる！',p:'😤'},
+    ],
+    rewards:[], isFinal:true,
+  },
+];
+
+// ============================================================
+// MOHAWK FACTORY
+// ============================================================
+
+function mkMohawk(hid, mid, label, tier=0) {
+  const h = HEADS.find(x=>x.id===hid)||HEADS[0];
+  const m = MOHAWKS.find(x=>x.id===mid)||MOHAWKS[0];
+  const tb = tier * 6;
+  const atk = h.atk + m.am + tb;
+  const def = h.def + m.dm + tb;
+  const sta = h.sta + m.sm + tb;
+  const hp  = h.hp  + tb * 5;
+  return {
+    uid: Math.random().toString(36).slice(2,10),
+    name: label || `${h.name}×${m.name}`,
+    hid, mid, h, m,
+    atk, def, sta, hp,
+    ba:h.atk+m.am, bd:h.def+m.dm, bs:h.sta+m.sm, bh:h.hp,
+  };
+}
+
+// ============================================================
+// AUDIO
+// ============================================================
+
+let audioCtx = null;
+function getAudioCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function beep(freq=440, dur=0.1, type='square', vol=0.15){
+  try{
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination);
+    osc.type = type; osc.frequency.value = freq;
+    g.gain.setValueAtTime(vol, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.start(); osc.stop(ctx.currentTime + dur);
+  }catch(e){}
+}
+function sfx(name){
+  switch(name){
+    case 'atk':   beep(300,0.08,'square');break;
+    case 'hit':   beep(180,0.12,'sawtooth',0.2);break;
+    case 'blk':   beep(600,0.06,'square',0.1);break;
+    case 'sp':    beep(80,0.05,'sawtooth',0.3); setTimeout(()=>beep(200,0.2,'square',0.3),60);break;
+    case 'ko':    beep(220,0.08,'sawtooth'); setTimeout(()=>beep(150,0.2,'sawtooth'),100); setTimeout(()=>beep(80,0.4,'sawtooth'),250);break;
+    case 'win':   beep(523,0.1,'square'); setTimeout(()=>beep(659,0.1,'square'),120); setTimeout(()=>beep(784,0.3,'square'),240);break;
+    case 'train': beep(440,0.07,'square',0.1);break;
+    case 'menu':  beep(660,0.05,'square',0.08);break;
+    case 'select':beep(880,0.07,'square',0.1);break;
+  }
+}
+
+// ============================================================
+// CANVAS DRAWING
+// ============================================================
+
+function drawMohawkSpike(ctx, x, topY, mid, facing){
+  const col = mid.col;
+  ctx.fillStyle = col;
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1;
+  switch(mid.id){
+    case 'big':
+      ctx.beginPath();ctx.moveTo(x-7,topY);ctx.lineTo(x,topY-42);ctx.lineTo(x+7,topY);ctx.closePath();ctx.fill();ctx.stroke();
+      break;
+    case 'slim':
+      ctx.beginPath();ctx.moveTo(x-4,topY);ctx.lineTo(x,topY-38);ctx.lineTo(x+4,topY);ctx.closePath();ctx.fill();ctx.stroke();
+      break;
+    case 'color':
+      ['#FF4081','#FF6D00','#FFD700','#00BCD4','#AB47BC'].forEach((c,i)=>{
+        ctx.fillStyle=c;
+        ctx.beginPath();ctx.moveTo(x-10+i*5,topY);ctx.lineTo(x-8+i*5,topY-22-i*4);ctx.lineTo(x-6+i*5,topY);ctx.closePath();ctx.fill();
+      });
+      break;
+    case 'twin':
+      ctx.beginPath();ctx.moveTo(x-9,topY);ctx.lineTo(x-5,topY-32);ctx.lineTo(x-1,topY);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.moveTo(x+1,topY);ctx.lineTo(x+5,topY-32);ctx.lineTo(x+9,topY);ctx.closePath();ctx.fill();ctx.stroke();
+      break;
+    case 'micro':
+      for(let i=-2;i<=2;i++){
+        ctx.beginPath();ctx.moveTo(x+i*5-2,topY);ctx.lineTo(x+i*5,topY-12);ctx.lineTo(x+i*5+2,topY);ctx.closePath();ctx.fill();
+      }
+      break;
+    case 'wild':
+      for(let i=0;i<7;i++){
+        const ox = (i-3)*6;
+        const h2 = 15+Math.sin(i*1.2)*12;
+        ctx.fillStyle = i%2===0?col:'#FF3300';
+        ctx.beginPath();ctx.moveTo(x+ox-3,topY);ctx.lineTo(x+ox,topY-h2);ctx.lineTo(x+ox+3,topY);ctx.closePath();ctx.fill();
+      }
+      break;
+    case 'spiral':
+      ctx.beginPath();
+      ctx.moveTo(x,topY);
+      for(let t=0;t<4*Math.PI;t+=0.1){
+        const r = t*3;
+        ctx.lineTo(x+Math.cos(t)*r*0.5, topY-t*4);
+      }
+      ctx.strokeStyle=col;ctx.lineWidth=3;ctx.stroke();
+      ctx.lineWidth=1;
+      break;
+    case 'golden':
+      ctx.fillStyle='#FFD600';
+      ctx.beginPath();ctx.moveTo(x-8,topY);ctx.lineTo(x,topY-38);ctx.lineTo(x+8,topY);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#FFF176';
+      ctx.beginPath();ctx.moveTo(x-4,topY-5);ctx.lineTo(x,topY-38);ctx.lineTo(x+4,topY-5);ctx.closePath();ctx.fill();
+      ctx.strokeStyle='#FF6F00';ctx.lineWidth=1;ctx.stroke();
+      break;
+    case 'rainbow':
+      ['#ff0000','#ff7700','#ffff00','#00ff00','#0077ff','#8800ff'].forEach((c,i)=>{
+        ctx.fillStyle=c;
+        ctx.beginPath();ctx.moveTo(x-8+i*3,topY);ctx.lineTo(x-6+i*3,topY-20-i*3);ctx.lineTo(x-4+i*3,topY);ctx.closePath();ctx.fill();
+      });
+      break;
+    case 'black':
+      ctx.fillStyle='#222';
+      ctx.beginPath();ctx.moveTo(x-9,topY);ctx.lineTo(x,topY-35);ctx.lineTo(x+9,topY);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#607D8B';
+      ctx.beginPath();ctx.moveTo(x-5,topY);ctx.lineTo(x,topY-35);ctx.lineTo(x+5,topY);ctx.closePath();ctx.fill();
+      ctx.strokeStyle='#90A4AE';ctx.lineWidth=1;ctx.stroke();
+      break;
+  }
+  ctx.lineWidth=1;
+}
+
+function drawChar(ctx, ch, isP){
+  const x = ch.x;
+  const gy = 165;
+  const fl = ch.facing < 0;
+  const m = ch.mohawk;
+  const state = ch.state;
+
+  ctx.save();
+  if(fl){ctx.translate(x*2,0);ctx.scale(-1,1);}
+
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.25)';
+  ctx.beginPath();ctx.ellipse(x,gy+1,18,4,0,0,Math.PI*2);ctx.fill();
+
+  // Flash on hit
+  if(state==='hit'||state==='ko'){ctx.globalAlpha=0.6+Math.random()*0.4;}
+
+  // Legs
+  const legC = isP?'#1565C0':'#6A1B9A';
+  ctx.fillStyle = legC;
+  if(state==='atk'||state==='sp'){
+    ctx.fillRect(x-14,gy-28,11,28);
+    ctx.fillRect(x+3,gy-22,11,22);
+  } else if(state==='def'){
+    ctx.fillRect(x-11,gy-28,9,28);
+    ctx.fillRect(x+2,gy-28,9,28);
+  } else {
+    ctx.fillRect(x-11,gy-28,10,28);
+    ctx.fillRect(x+1,gy-28,10,28);
+  }
+
+  // Body
+  const bodyC = isP?'#2E7D32':'#B71C1C';
+  ctx.fillStyle = bodyC;
+  ctx.fillRect(x-14,gy-60,28,32);
+
+  // Arms
+  ctx.fillStyle = bodyC;
+  if(state==='atk'){
+    ctx.fillRect(x+14,gy-57,28,9);
+    ctx.fillStyle=m.h.col||'#FFCC80';
+    ctx.fillRect(x+42,gy-60,12,12);
+    ctx.fillStyle=legC;
+    ctx.fillRect(x-22,gy-58,8,20);
+  } else if(state==='sp'){
+    ctx.fillRect(x+14,gy-55,32,9);
+    ctx.fillStyle=m.h.col||'#FFCC80';
+    ctx.fillRect(x+46,gy-60,14,14);
+    ctx.fillStyle=legC;
+    ctx.fillRect(x-24,gy-56,8,22);
+  } else if(state==='def'){
+    ctx.fillRect(x-22,gy-65,8,30);
+    ctx.fillRect(x+14,gy-65,8,30);
+  } else {
+    ctx.fillRect(x-22,gy-58,7,20);
+    ctx.fillRect(x+15,gy-58,7,20);
+  }
+
+  // Head
+  const headW = 22;
+  const headH = 22;
+  const headTopY = gy-60-headH;
+  ctx.fillStyle = m.h.col||'#FFCC80';
+  ctx.fillRect(x-headW/2, headTopY, headW, headH);
+
+  // Eyes
+  if(state==='ko'){
+    ctx.fillStyle='#555';
+    ctx.fillText('×',x-7,headTopY+13);
+    ctx.fillText('×',x+3,headTopY+13);
+  } else if(state==='hit'){
+    ctx.fillStyle='#000';
+    ctx.fillRect(x-7,headTopY+8,4,3);
+    ctx.fillRect(x+3,headTopY+8,4,3);
+  } else {
+    ctx.fillStyle='#000';
+    ctx.fillRect(x-7,headTopY+7,4,5);
+    ctx.fillRect(x+3,headTopY+7,4,5);
+    // Eyebrow
+    ctx.fillStyle=isP?'#1B5E20':'#7B1FA2';
+    ctx.fillRect(x-8,headTopY+4,5,2);
+    ctx.fillRect(x+3,headTopY+4,5,2);
+  }
+
+  // Mohawk
+  drawMohawkSpike(ctx, x, headTopY, m.m, ch.facing);
+
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+
+function drawEffect(ctx, e){
+  ctx.save();
+  ctx.globalAlpha = e.life;
+  if(e.type==='slash'){
+    ctx.strokeStyle = e.col||'#fff';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(e.x-20, e.y-20);
+    ctx.lineTo(e.x+20, e.y+20);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(e.x+10, e.y-25);
+    ctx.lineTo(e.x-10, e.y+25);
+    ctx.stroke();
+  } else if(e.type==='hit'){
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 20px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(e.txt||'HIT', e.x, e.y - e.vy*5);
+  } else if(e.type==='sp'){
+    ctx.strokeStyle = e.col||'#ff44ff';
+    ctx.lineWidth = 3;
+    for(let i=0;i<6;i++){
+      const a = (i/6)*Math.PI*2 + e.t;
+      ctx.beginPath();
+      ctx.arc(e.x,e.y, 20+(1-e.life)*40, a, a+0.8);
+      ctx.stroke();
+    }
+  } else if(e.type==='block'){
+    ctx.strokeStyle = '#4444ff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, 15+(1-e.life)*20, 0, Math.PI*2);
+    ctx.stroke();
+  } else if(e.type==='num'){
+    ctx.fillStyle = e.col||'#ff4444';
+    ctx.font = `bold ${14+(1-e.life)*8}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText(e.txt, e.x, e.y - (1-e.life)*30);
+  }
+  ctx.restore();
+}
+
+// Draw mohawk preview on small canvas
+function drawPreview(canvasId, mk){
+  const cv = document.getElementById(canvasId);
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const w = cv.width, h = cv.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#0a0a0a';
+  ctx.fillRect(0,0,w,h);
+  const cx = w/2, gy = h-5;
+  // Mini body
+  ctx.fillStyle = mk.h.col||'#FFCC80';
+  ctx.fillRect(cx-8, gy-28, 16, 16);
+  // Mohawk - shrunk
+  ctx.save();
+  ctx.translate(0, gy-28);
+  ctx.scale(0.7, 0.7);
+  ctx.translate(0, -(gy-28));
+  drawMohawkSpike(ctx, cx, gy-28, mk.m, 1);
+  ctx.restore();
+}
+
+// ============================================================
+// GAME STATE
+// ============================================================
+
+const state = {
+  scn: 0,
+  inv: {mks:[], items:[]},
+  sel: [],      // selected mohawk indices (3)
+  trn: {left:5, idx:0},  // training
+  btr: {        // battle round tracking
+    pwins:0, ewins:0,
+    pIdx:0, eIdx:0,
+  },
+};
+
+// ============================================================
+// SCREEN MANAGER
+// ============================================================
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sc-'+id).classList.add('active');
+}
+
+// ============================================================
+// G = GAME CONTROLLER
+// ============================================================
+
+const G = {
+  init(){
+    state.inv.mks = [
+      mkMohawk('round','big','モヒカン太郎'),
+      mkMohawk('sq','slim','スリム次郎'),
+      mkMohawk('slim','color','カラー三郎'),
+    ];
+    state.inv.items = [
+      {...ITEMS_DEF.find(i=>i.id==='gatsby')},
+    ];
+    state.scn = 0;
+    state.sel = [];
+    state.btr = {pwins:0,ewins:0,pIdx:0,eIdx:0};
+  },
+
+  start(){
+    sfx('menu');
+    G.init();
+    G.story(0, ()=>{ show('map'); G.renderMap(); });
+  },
+
+  retry(){
+    sfx('menu');
+    G.init();
+    show('map');
+    G.renderMap();
+  },
+
+  showMap(){
+    show('map');
+    G.renderMap();
+  },
+
+  renderMap(){
+    const list = document.getElementById('map-list');
+    list.innerHTML = '';
+    SCENARIOS.forEach((s,i)=>{
+      const st = i < state.scn ? 'done' : i===state.scn ? 'avail' : 'lock';
+      const node = document.createElement('div');
+      node.className = `map-node ${st}`;
+      node.innerHTML = `<div class="nd-icon">${s.icon}</div><div class="nd-info"><div class="nd-name">${s.name}</div><div class="nd-sub">${s.sub}</div></div><div class="nd-st">${st==='done'?'✅ クリア':st==='avail'?'▶ 挑戦':'🔒'}</div>`;
+      if(st==='avail') node.onclick=()=>G.startScenario(i);
+      list.appendChild(node);
+    });
+    // Party
+    const pr = document.getElementById('party-row');
+    pr.innerHTML = '';
+    if(state.sel.length>0){
+      state.sel.forEach(idx=>{
+        const m = state.inv.mks[idx];
+        pr.innerHTML += `<div class="pc"><div class="pc-n">${m.name}</div><div class="pc-h">HP${m.hp}</div></div>`;
+      });
+    } else {
+      pr.innerHTML = '<div style="color:#444;font-size:0.75rem">対戦が決まると選択できます</div>';
+    }
+  },
+
+  startScenario(i){
+    sfx('menu');
+    state.scn = i;
+    state.sel = [];
+    state.btr = {pwins:0,ewins:0,pIdx:0,eIdx:0};
+    G.story(i, ()=>{ show('select'); G.renderSel(); });
+  },
+
+  // ---- STORY ----
+  story(scnIdx, cb){
+    const lines = SCENARIOS[scnIdx].story;
+    let li=0, ci=0;
+    let iv=null;
+    const scr = document.getElementById('sc-story');
+    show('story');
+
+    function render(){
+      if(li>=lines.length){ scr.onclick=null; cb(); return; }
+      const ln=lines[li];
+      document.getElementById('st-name').textContent=ln.n;
+      document.getElementById('st-portrait').textContent=ln.p||'';
+      document.getElementById('st-text').textContent='';
+      clearInterval(iv);
+      ci=0;
+      iv=setInterval(()=>{
+        if(ci<ln.t.length){
+          document.getElementById('st-text').textContent=ln.t.slice(0,++ci);
+        } else {
+          clearInterval(iv);
+          document.getElementById('st-text').innerHTML+=`<span style="animation:blink 0.8s step-end infinite;display:inline-block">▼</span>`;
+        }
+      },35);
+    }
+    render();
+    scr.onclick=()=>{
+      const ln=lines[li];
+      if(ci<ln.t.length){
+        clearInterval(iv); ci=ln.t.length;
+        document.getElementById('st-text').textContent=ln.t;
+        document.getElementById('st-text').innerHTML+=`<span style="animation:blink 0.8s step-end infinite;display:inline-block">▼</span>`;
+      } else {
+        li++;
+        render();
+      }
+    };
+  },
+
+  // ---- SELECT ----
+  tmpSel:[],
+  renderSel(){
+    G.tmpSel=[];
+    const grid=document.getElementById('mk-grid');
+    grid.innerHTML='';
+    state.inv.mks.forEach((m,i)=>{
+      const card=document.createElement('div');
+      card.className='mk-card';
+      card.id=`mkc-${i}`;
+      card.innerHTML=`
+        <canvas class="mk-prev" id="mkpv-${i}" width="130" height="55"></canvas>
+        <div class="mk-name">${m.name}</div>
+        <div class="mk-type">${m.h.name} × ${m.m.name}</div>
+        <div class="mk-stats">
+          <div class="ms"><span class="ms-l">ATK</span><span class="ms-v">${m.atk}</span></div>
+          <div class="ms"><span class="ms-l">DEF</span><span class="ms-v">${m.def}</span></div>
+          <div class="ms"><span class="ms-l">STA</span><span class="ms-v">${m.sta}</span></div>
+          <div class="ms"><span class="ms-l">HP</span><span class="ms-v">${m.hp}</span></div>
+        </div>`;
+      card.onclick=()=>G.toggleSel(i);
+      grid.appendChild(card);
+      setTimeout(()=>drawPreview(`mkpv-${i}`,m),0);
+    });
+    G.updateSelBtn();
+  },
+
+  toggleSel(i){
+    sfx('select');
+    const idx=G.tmpSel.indexOf(i);
+    if(idx>=0) G.tmpSel.splice(idx,1);
+    else if(G.tmpSel.length<3) G.tmpSel.push(i);
+    state.inv.mks.forEach((_,j)=>{
+      const c=document.getElementById(`mkc-${j}`);
+      const si=G.tmpSel.indexOf(j);
+      c.className='mk-card'+(si>=0?` s${si+1}`:'');
+      let b=c.querySelector('.mk-badge');
+      if(si>=0){
+        if(!b){b=document.createElement('div');b.className='mk-badge';c.appendChild(b);}
+        b.className=`mk-badge b${si+1}`;b.textContent=si+1;
+      } else { if(b)b.remove(); }
+    });
+    G.updateSelBtn();
+  },
+
+  updateSelBtn(){
+    const btn=document.getElementById('btn-conf');
+    if(G.tmpSel.length===3){btn.disabled=false;btn.textContent='対戦に出場！';}
+    else{btn.disabled=true;btn.textContent=`${G.tmpSel.length}/3 選択中`;}
+  },
+
+  confirmSel(){
+    if(G.tmpSel.length!==3)return;
+    sfx('menu');
+    state.sel=[...G.tmpSel];
+    state.trn={left:5,idx:0};
+    show('training');
+    document.getElementById('tr-log').innerHTML='';
+    G.renderTrn();
+  },
+
+  // ---- TRAINING ----
+  renderTrn(){
+    document.getElementById('tr-turns').textContent=state.trn.left;
+    const pp=document.getElementById('tr-party');
+    pp.innerHTML='';
+    state.sel.forEach((midx,i)=>{
+      const m=state.inv.mks[midx];
+      const card=document.createElement('div');
+      card.className=`tr-card${i===state.trn.idx?' act':''}`;
+      card.innerHTML=`<div class="tr-cn">${m.name}</div>
+        ${sb('ATK',m.atk,60,'a')}${sb('DEF',m.def,60,'d')}${sb('STA',m.sta,60,'s')}${sb('HP',m.hp,250,'h')}`;
+      card.onclick=()=>{state.trn.idx=i;sfx('menu');G.renderTrn();};
+      pp.appendChild(card);
+    });
+    function sb(l,v,mx,t){
+      const p=Math.min(100,(v/mx)*100);
+      return `<div class="sb"><div class="sb-l">${l}</div><div class="sb-t"><div class="sb-f f-${t}" style="width:${p}%"></div></div></div>`;
+    }
+    const acts=document.getElementById('tr-acts');
+    acts.innerHTML='';
+    TR_ACTS.forEach(a=>{
+      const btn=document.createElement('div');
+      btn.className='tr-act';
+      const noItem=a.id==='item'&&state.inv.items.length===0;
+      if(noItem)btn.style.opacity='0.25';
+      btn.innerHTML=`<div class="ta-icon">${a.icon}</div><div class="ta-name">${a.name}</div><div class="ta-eff">${a.desc}</div>`;
+      btn.onclick=()=>{
+        if(noItem)return;
+        sfx('train');
+        if(a.id==='item')G.showItemSel();
+        else G.doTrain(a);
+      };
+      acts.appendChild(btn);
+    });
+  },
+
+  doTrain(a){
+    if(state.trn.left<=0)return;
+    const m=state.inv.mks[state.sel[state.trn.idx]];
+    m.atk=Math.max(1,m.atk+(a.a||0));
+    m.def=Math.max(1,m.def+(a.d||0));
+    m.sta=Math.max(1,m.sta+(a.s||0));
+    m.hp =Math.max(10,m.hp+(a.h||0));
+    state.trn.left--;
+    // Log
+    const lg=document.getElementById('tr-log');
+    let html=`<div class="lg">${m.name}が${a.name}を行った！ `;
+    const parts=[];
+    if(a.a>0)parts.push(`<span class="lg-g">ATK+${a.a}</span>`);
+    if(a.a<0)parts.push(`<span class="lg-b">ATK${a.a}</span>`);
+    if(a.d>0)parts.push(`<span class="lg-g">DEF+${a.d}</span>`);
+    if(a.d<0)parts.push(`<span class="lg-b">DEF${a.d}</span>`);
+    if(a.s>0)parts.push(`<span class="lg-g">STA+${a.s}</span>`);
+    if(a.s<0)parts.push(`<span class="lg-b">STA${a.s}</span>`);
+    lg.innerHTML+=html+parts.join(' ')+'</div>';
+    lg.scrollTop=99999;
+    if(state.trn.left<=0){ setTimeout(()=>B.startBattle(),600); }
+    else G.renderTrn();
+  },
+
+  showItemSel(){
+    const ov=document.createElement('div');
+    ov.className='item-overlay';
+    ov.innerHTML=`<div class="io-ttl">アイテムを選択</div>`;
+    state.inv.items.forEach((it,i)=>{
+      const d=document.createElement('div');
+      d.className='io-item';
+      d.innerHTML=`<div class="io-name">${it.icon} ${it.name}</div><div class="io-desc">${it.desc}</div>`;
+      d.onclick=()=>{G.useItem(i);document.body.removeChild(ov);};
+      ov.appendChild(d);
+    });
+    const cancel=document.createElement('button');
+    cancel.className='io-cancel';
+    cancel.textContent='キャンセル';
+    cancel.onclick=()=>document.body.removeChild(ov);
+    ov.appendChild(cancel);
+    document.body.appendChild(ov);
+  },
+
+  useItem(i){
+    const it=state.inv.items[i];
+    const m=state.inv.mks[state.sel[state.trn.idx]];
+    if(it.restore){
+      m.atk=Math.max(m.atk,m.ba); m.def=Math.max(m.def,m.bd);
+      m.sta=Math.max(m.sta,m.bs); m.hp=Math.max(m.hp,m.bh);
+    } else {
+      m.atk=Math.max(1,m.atk+(it.a||0)); m.def=Math.max(1,m.def+(it.d||0));
+      m.sta=Math.max(1,m.sta+(it.s||0)); m.hp=Math.max(10,m.hp+(it.h||0));
+    }
+    state.inv.items.splice(i,1);
+    state.trn.left--;
+    const lg=document.getElementById('tr-log');
+    lg.innerHTML+=`<div class="lg">${m.name}が<span style="color:#ffdd00">${it.icon}${it.name}</span>を使った！</div>`;
+    lg.scrollTop=99999;
+    if(state.trn.left<=0) setTimeout(()=>B.startBattle(),600);
+    else G.renderTrn();
+  },
+
+  // ---- NEXT ROUND ----
+  nextRound(){
+    sfx('menu');
+    const sc=SCENARIOS[state.scn];
+    const btr=state.btr;
+    // Check if match over
+    if(btr.pwins>=2){
+      // Player won the match
+      G.matchWin();
+    } else if(btr.ewins>=2){
+      // Player lost
+      show('gameover');
+    } else {
+      // Continue - next individual battle
+      B.startBattle();
+    }
+  },
+
+  matchWin(){
+    const sc=SCENARIOS[state.scn];
+    if(sc.isFinal){
+      show('sc-clear'); // handled by direct id
+      document.getElementById('sc-clear').classList.add('active');
+      document.querySelectorAll('.screen').forEach(s=>{if(s.id!=='sc-clear')s.classList.remove('active');});
+      sfx('win');
+      return;
+    }
+    // Give rewards
+    const newItems=[];
+    sc.rewards.forEach(id=>{
+      const it=ITEMS_DEF.find(x=>x.id===id);
+      if(it){
+        state.inv.items.push({...it});
+        newItems.push(it);
+      }
+    });
+    // Give new mohawk
+    let newMk=null;
+    if(sc.newMk){
+      newMk=mkMohawk(sc.newMk.h, sc.newMk.m);
+      state.inv.mks.push(newMk);
+    }
+    // Show item get
+    if(newItems.length>0||newMk){
+      show('items');
+      const list=document.getElementById('ig-list');
+      list.innerHTML='';
+      newItems.forEach(it=>{
+        list.innerHTML+=`<div class="ig-item" style="animation-delay:${list.children.length*0.15}s"><div class="ig-name">${it.icon} ${it.name}</div><div class="ig-desc">${it.desc}</div></div>`;
+      });
+      if(newMk){
+        list.innerHTML+=`<div class="ig-item" style="border-color:#44aaff;animation-delay:${list.children.length*0.15}s"><div class="ig-name" style="color:#44aaff">🪮 ${newMk.name}</div><div class="ig-desc">新しいモヒカンを手に入れた！${newMk.h.name}×${newMk.m.name}</div></div>`;
+      }
+      sfx('win');
+    } else {
+      state.scn++;
+      G.showMap();
+      return;
+    }
+    state.scn++;
+  },
+};
+
+// ============================================================
+// B = BATTLE ENGINE
+// ============================================================
+
+const B = {
+  p:{},e:{},
+  efx:[],
+  timer:60,
+  timerMs:0,
+  over:false,
+  animId:null,
+  lastT:0,
+  input:{L:false,R:false},
+  aiTimer:0,
+  aiState:'approach',
+
+  startBattle(){
+    show('battle');
+    const sc=SCENARIOS[state.scn];
+    const btr=state.btr;
+
+    // Player mohawk
+    const pmk=state.inv.mks[state.sel[btr.pIdx%3]];
+    // Enemy mohawk
+    const emkDef=sc.enemy.mks[btr.eIdx%3];
+    const emk=mkMohawk(emkDef.h, emkDef.m, `${sc.enemy.name}のモヒカン${btr.eIdx+1}`, state.scn);
+
+    B.p={x:100,y:0,hp:pmk.hp,mhp:pmk.hp,sta:100,msta:100,gauge:0,state:'idle',stT:0,facing:1,mohawk:pmk,atk:pmk.atk,def:pmk.def};
+    B.e={x:380,y:0,hp:emk.hp,mhp:emk.hp,sta:100,msta:100,gauge:0,state:'idle',stT:0,facing:-1,mohawk:emk,atk:emk.atk,def:emk.def};
+    B.efx=[];
+    B.timer=60; B.timerMs=60000;
+    B.over=false;
+    B.ending=false;
+    B.input={L:false,R:false};
+    B.aiTimer=0; B.aiState='approach';
+    B.lastT=0;
+
+    // HUD
+    document.getElementById('bt-pname').textContent=pmk.name;
+    document.getElementById('bt-ename').textContent=emk.name;
+    document.getElementById('bt-round').textContent=`Rd ${btr.pIdx+1}/3`;
+    G.renderWins();
+
+    if(B.animId) cancelAnimationFrame(B.animId);
+    B.animId=requestAnimationFrame(B.loop);
+  },
+
+  loop(t){
+    if(B.over) return;
+    const dt=B.lastT?Math.min((t-B.lastT)/1000,0.05):0.016;
+    B.lastT=t;
+    B.update(dt);
+    B.render();
+    B.animId=requestAnimationFrame(B.loop);
+  },
+
+  update(dt){
+    const p=B.p, e=B.e;
+    const W=480;
+
+    // Timer
+    B.timerMs -= dt*1000;
+    if(B.timerMs<=0){ B.timerMs=0; if(!B.ending){B.ending=true;B.endRound(null);} return; }
+    B.timer=Math.ceil(B.timerMs/1000);
+    document.getElementById('bt-timer').textContent=B.timer;
+
+    // Player movement
+    if(p.state==='idle'||p.state==='walk'){
+      if(B.input.L){ p.x=Math.max(30,p.x-160*dt); p.state='walk'; p.facing=-1; }
+      else if(B.input.R){ p.x=Math.min(W-30,p.x+160*dt); p.state='walk'; p.facing=1; }
+      else p.state='idle';
+    }
+    // Auto face enemy
+    p.facing = e.x>p.x?1:-1;
+    e.facing = p.x<e.x?-1:1;
+
+    // Update state timers
+    [p,e].forEach(ch=>{
+      ch.stT-=dt;
+      if(ch.stT<=0 && (ch.state==='atk'||ch.state==='def'||ch.state==='sp'||ch.state==='hit')){
+        ch.state='idle';
+        ch.stT=0;
+      }
+    });
+
+    // Stamina regen
+    [p,e].forEach(ch=>{
+      if(ch.state!=='def'){
+        ch.sta=Math.min(ch.msta, ch.sta+15*dt);
+      }
+    });
+
+    // Attack collision check
+    const dist=Math.abs(p.x-e.x);
+    const RANGE=90;
+
+    // Player attack lands
+    if(p.state==='atk' && p.stT > 0.12 && p.stT < 0.25 && dist<RANGE){
+      if(e.state==='def'){
+        const dmg=Math.max(1,Math.floor(p.atk*0.25));
+        e.hp=Math.max(0,e.hp-dmg);
+        p.gauge=Math.min(100,p.gauge+8);
+        B.efx.push({type:'block',x:e.x,y:130,life:1,t:0});
+        B.efx.push({type:'num',x:e.x,y:120,txt:dmg,col:'#4444ff',life:1});
+        sfx('blk');
+      } else if(e.state!=='ko'){
+        const dmg=Math.max(2,Math.floor(p.atk-e.def*0.3));
+        e.hp=Math.max(0,e.hp-dmg);
+        p.gauge=Math.min(100,p.gauge+GAUGE_PER_HIT);
+        if(e.state!=='hit'){
+          e.state='hit';e.stT=0.3;
+          B.efx.push({type:'slash',x:e.x,y:130,life:1,col:p.mohawk.m.col});
+          B.efx.push({type:'num',x:e.x,y:110,txt:dmg,col:'#ff4444',life:1});
+          sfx('hit');
+        }
+      }
+      p.stT=0.001; // expire next frame, prevent multi-hit
+    }
+
+    // Enemy attack lands
+    if(e.state==='atk' && e.stT>0.12 && e.stT<0.25 && dist<RANGE){
+      if(p.state==='def'){
+        const dmg=Math.max(1,Math.floor(e.atk*0.25));
+        p.hp=Math.max(0,p.hp-dmg);
+        e.gauge=Math.min(100,e.gauge+8);
+        B.efx.push({type:'block',x:p.x,y:130,life:1,t:0});
+        B.efx.push({type:'num',x:p.x,y:120,txt:dmg,col:'#4444ff',life:1});
+        sfx('blk');
+      } else if(p.state!=='ko'){
+        const dmg=Math.max(2,Math.floor(e.atk-p.def*0.3));
+        p.hp=Math.max(0,p.hp-dmg);
+        e.gauge=Math.min(100,e.gauge+GAUGE_PER_HIT);
+        if(p.state!=='hit'){
+          p.state='hit';p.stT=0.3;
+          B.efx.push({type:'slash',x:p.x,y:130,life:1,col:e.mohawk.m.col});
+          B.efx.push({type:'num',x:p.x,y:110,txt:dmg,col:'#ff6600',life:1});
+          sfx('hit');
+        }
+      }
+      e.stT=0.001; // expire next frame, prevent multi-hit
+    }
+
+    // Special attacks
+    if(p.state==='sp' && p.stT>0.2 && p.stT<0.45 && dist<RANGE*1.5){
+      if(e.state!=='ko'){
+        const dmg=Math.max(5,Math.floor(p.atk*2-e.def*0.2));
+        e.hp=Math.max(0,e.hp-dmg);
+        e.state='hit';e.stT=0.5;
+        B.efx.push({type:'sp',x:e.x,y:130,life:1,t:0,col:p.mohawk.m.col});
+        B.efx.push({type:'num',x:e.x,y:100,txt:dmg+'!!',col:'#ff44ff',life:1});
+        p.stT=0.001;
+        sfx('hit');
+      }
+    }
+    if(e.state==='sp' && e.stT>0.2 && e.stT<0.45 && dist<RANGE*1.5){
+      if(p.state!=='ko'){
+        const dmg=Math.max(5,Math.floor(e.atk*2-p.def*0.2));
+        p.hp=Math.max(0,p.hp-dmg);
+        p.state='hit';p.stT=0.5;
+        B.efx.push({type:'sp',x:p.x,y:130,life:1,t:0,col:e.mohawk.m.col});
+        B.efx.push({type:'num',x:p.x,y:100,txt:dmg+'!!',col:'#ff44ff',life:1});
+        e.stT=0.001;
+        sfx('hit');
+      }
+    }
+
+    // Check KO
+    if(p.hp<=0 && p.state!=='ko'){p.hp=0;p.state='ko';sfx('ko');}
+    if(e.hp<=0 && e.state!=='ko'){e.hp=0;e.state='ko';sfx('ko');}
+
+    // Update effects
+    B.efx.forEach(ef=>{
+      ef.life-=dt*2.5;
+      if(ef.t!==undefined)ef.t+=dt*3;
+    });
+    B.efx=B.efx.filter(ef=>ef.life>0);
+
+    // Check end
+    if((p.state==='ko'||e.state==='ko') && !B.ending){
+      B.ending=true;
+      B.over=true;
+      setTimeout(()=>B.endRound(p.state==='ko'?'e':'p'), 1200);
+      return;
+    }
+
+    // Enemy AI
+    B.updateAI(dt);
+
+    // HUD
+    B.updateHUD();
+  },
+
+  updateAI(dt){
+    const p=B.p, e=B.e;
+    const ai=SCENARIOS[state.scn].enemy.ai;
+    const dist=Math.abs(p.x-e.x);
+    B.aiTimer-=dt;
+    if(B.aiTimer>0) return;
+    if(e.state==='hit'||e.state==='ko'||e.state==='atk'||e.state==='sp'||e.state==='def') return;
+    const W=480;
+
+    // Determine action
+    let action='approach';
+    if(ai===1){
+      if(dist<90) action=Math.random()<0.6?'atk':'idle';
+      else action='approach';
+    } else if(ai===2){
+      if(e.hp<e.mhp*0.3) action=e.gauge>=100?'sp':Math.random()<0.5?'atk':'approach';
+      else if(dist<90) action=Math.random()<0.5?'atk':Math.random()<0.3?'def':'idle';
+      else action='approach';
+    } else { // ai===3
+      if(e.gauge>=100&&dist<120) action='sp';
+      else if(dist<90) action=Math.random()<0.55?'atk':Math.random()<0.3?'def':Math.random()<0.3?'sp':'idle';
+      else action='approach';
+    }
+
+    if(action==='approach'){
+      const spd=ai===3?200:150;
+      if(p.x<e.x) e.x=Math.max(30,e.x-spd*0.25);
+      else e.x=Math.min(W-30,e.x+spd*0.25);
+      B.aiTimer=0.08+Math.random()*0.1;
+    } else if(action==='atk'){
+      if(dist<90 && e.sta>15){
+        e.state='atk';e.stT=0.35;e.sta=Math.max(0,e.sta-15);
+        sfx('atk');
+      }
+      B.aiTimer=0.3+Math.random()*0.4;
+    } else if(action==='sp'){
+      if(e.gauge>=100){
+        e.state='sp';e.stT=0.6;e.gauge=0;
+        sfx('sp');
+        B.showMsg(e.mohawk.m.sp);
+      }
+      B.aiTimer=0.5+Math.random()*0.3;
+    } else if(action==='def'){
+      e.state='def';e.stT=0.4;
+      B.aiTimer=0.4;
+    } else {
+      B.aiTimer=0.15+Math.random()*0.2;
+    }
+  },
+
+  updateHUD(){
+    const p=B.p, e=B.e;
+    const ppct=Math.max(0,(p.hp/p.mhp)*100);
+    const epct=Math.max(0,(e.hp/e.mhp)*100);
+    const php=document.getElementById('bt-php');
+    const ehp=document.getElementById('bt-ehp');
+    php.style.width=ppct+'%';
+    ehp.style.width=epct+'%';
+    php.className='hp-fill'+(ppct<25?' low':'');
+    ehp.className='hp-fill'+(epct<25?' low':'');
+    document.getElementById('bt-psta').style.width=(p.sta/p.msta*100)+'%';
+    document.getElementById('bt-psp').style.width=p.gauge+'%';
+    const spBtn=document.getElementById('btn-sp');
+    if(p.gauge>=100) spBtn.classList.add('rdy');
+    else spBtn.classList.remove('rdy');
+  },
+
+  render(){
+    const cv=document.getElementById('battle-canvas');
+    const ctx=cv.getContext('2d');
+    const W=cv.width, H=cv.height;
+    // BG
+    ctx.fillStyle='#130800';
+    ctx.fillRect(0,0,W,H);
+    // City silhouette
+    ctx.fillStyle='#0a0400';
+    [[0,80,50,100],[60,55,70,115],[140,70,55,100],[210,35,80,135],[305,50,60,120],[375,25,90,145],[475,65,30,115]].forEach(([x,y,w,h])=>{
+      ctx.fillRect(x,y,w,h);
+    });
+    // Ground
+    ctx.fillStyle='#1a0a00';
+    ctx.fillRect(0,165,W,H-165);
+    ctx.fillStyle='#2a1500';
+    ctx.fillRect(0,165,W,2);
+    // Grid
+    ctx.strokeStyle='#221000';ctx.lineWidth=1;
+    for(let x=0;x<W;x+=25){
+      ctx.beginPath();ctx.moveTo(x,165);ctx.lineTo(x+20,H);ctx.stroke();
+    }
+    // Characters
+    drawChar(ctx,B.p,true);
+    drawChar(ctx,B.e,false);
+    // Effects
+    B.efx.forEach(ef=>drawEffect(ctx,ef));
+  },
+
+  showMsg(txt){
+    const el=document.getElementById('bt-msg');
+    el.textContent=txt;
+    el.style.opacity='1';
+    el.style.transition='none';
+    setTimeout(()=>{el.style.transition='opacity 0.5s';el.style.opacity='0';},1000);
+  },
+
+  endRound(winner){
+    cancelAnimationFrame(B.animId);
+    B.over=true;
+    const btr=state.btr;
+    const rd=btr.pIdx+1; // 1-indexed round number
+    show('result');
+    if(winner==='p'){
+      btr.pwins++;
+      document.getElementById('res-ttl').className='res-ttl res-win';
+      document.getElementById('res-ttl').textContent=`Round ${rd} WIN!`;
+      document.getElementById('res-msg').textContent=`${B.p.mohawk.name} が ${B.e.mohawk.name} に勝利！  スコア ${btr.pwins}-${btr.ewins}`;
+      sfx('win');
+    } else if(winner==='e'){
+      btr.ewins++;
+      document.getElementById('res-ttl').className='res-ttl res-lose';
+      document.getElementById('res-ttl').textContent=`Round ${rd} LOSE…`;
+      document.getElementById('res-msg').textContent=`${B.e.mohawk.name} に敗れた…  スコア ${btr.pwins}-${btr.ewins}`;
+      sfx('ko');
+    } else {
+      // Time up - compare HP
+      if(B.p.hp>=B.e.hp){
+        btr.pwins++;
+        document.getElementById('res-ttl').className='res-ttl res-win';
+        document.getElementById('res-ttl').textContent=`Round ${rd} WIN! (時間切れ)`;
+        document.getElementById('res-msg').textContent=`残HP あなた:${B.p.hp} 相手:${B.e.hp}  スコア ${btr.pwins}-${btr.ewins}`;
+        sfx('win');
+      } else {
+        btr.ewins++;
+        document.getElementById('res-ttl').className='res-ttl res-lose';
+        document.getElementById('res-ttl').textContent=`Round ${rd} LOSE… (時間切れ)`;
+        document.getElementById('res-msg').textContent=`残HP あなた:${B.p.hp} 相手:${B.e.hp}  スコア ${btr.pwins}-${btr.ewins}`;
+      }
+    }
+    // 団体戦: 両者とも次の対戦者へ進む
+    btr.pIdx++;
+    btr.eIdx++;
+    G.renderWins();
+    // ボタンテキストを状況に応じて変える
+    const matchOver2 = btr.pwins>=2 || btr.ewins>=2 || btr.pIdx>=3;
+    const nextBtn = document.querySelector('#sc-result .btn-next');
+    if(nextBtn) nextBtn.textContent = matchOver2 ? '試合結果を見る →' : `Round ${btr.pIdx+1}へ →`;
+  },
+
+  pressMove(dir,down){
+    B.input[dir]=down;
+  },
+
+  action(type){
+    if(B.over) return;
+    const p=B.p;
+    if(type==='atk'){
+      if(p.state==='idle'||p.state==='walk'){
+        if(p.sta<15) return;
+        p.state='atk';p.stT=0.35;p.sta=Math.max(0,p.sta-15);
+        sfx('atk');
+      }
+    } else if(type==='def'){
+      if(p.state==='idle'||p.state==='walk'){
+        p.state='def';p.stT=0.4;
+      }
+    } else if(type==='sp'){
+      if(p.gauge>=100&&(p.state==='idle'||p.state==='walk')){
+        p.state='sp';p.stT=0.6;p.gauge=0;
+        sfx('sp');
+        B.showMsg(p.mohawk.m.sp);
+      }
+    }
+  },
+};
+
+const GAUGE_PER_HIT = 20;
+
+G.renderWins = function(){
+  const sc=SCENARIOS[state.scn];
+  const btr=state.btr;
+  // Player wins dots
+  let pw='',ew='';
+  for(let i=0;i<2;i++) pw+=`<div class="wd${i<btr.pwins?' on':''}"></div>`;
+  for(let i=0;i<2;i++) ew+=`<div class="wd${i<btr.ewins?' on':''}"></div>`;
+  document.getElementById('bt-pwins').innerHTML=pw;
+  document.getElementById('bt-ewins').innerHTML=ew;
+};
+
+// Override nextRound for match logic (柔道団体戦式)
+G.nextRound = function(){
+  sfx('menu');
+  const btr=state.btr;
+  // 試合終了判定: 先に2勝 or 全3戦消化
+  const matchOver = btr.pwins>=2 || btr.ewins>=2 || btr.pIdx>=3;
+  if(matchOver){
+    if(btr.pwins>btr.ewins){
+      G.matchWin();
+    } else {
+      show('gameover');
+    }
+  } else {
+    B.startBattle();
+  }
+};
+
+// Override matchWin for clear screen
+G.matchWin = function(){
+  const sc=SCENARIOS[state.scn];
+  if(sc.isFinal){
+    sfx('win');
+    show('clear');
+    return;
+  }
+  const newItems=[];
+  sc.rewards.forEach(id=>{
+    const it=ITEMS_DEF.find(x=>x.id===id);
+    if(it){state.inv.items.push({...it});newItems.push(it);}
+  });
+  let newMk=null;
+  if(sc.newMk){
+    newMk=mkMohawk(sc.newMk.h,sc.newMk.m);
+    state.inv.mks.push(newMk);
+  }
+  state.scn++;
+  if(newItems.length>0||newMk){
+    show('items');
+    const list=document.getElementById('ig-list');
+    list.innerHTML='';
+    newItems.forEach((it,ii)=>{
+      list.innerHTML+=`<div class="ig-item" style="animation-delay:${ii*0.15}s"><div class="ig-name">${it.icon} ${it.name}</div><div class="ig-desc">${it.desc}</div></div>`;
+    });
+    if(newMk){
+      list.innerHTML+=`<div class="ig-item" style="border-color:#44aaff;animation-delay:${(newItems.length)*0.15}s"><div class="ig-name" style="color:#44aaff">🪮 ${newMk.name}</div><div class="ig-desc">新しいモヒカンをゲット！ ${newMk.h.name}×${newMk.m.name}</div></div>`;
+    }
+    sfx('win');
+  } else {
+    G.showMap();
+  }
+};
+
+// ============================================================
+// INIT
+// ============================================================
+(function(){
+  // Prevent scrolling
+  document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+  document.addEventListener('contextmenu',e=>e.preventDefault());
+})();
+</script>
+</body>
+</html>
