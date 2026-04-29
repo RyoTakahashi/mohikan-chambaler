@@ -203,6 +203,21 @@
     .io-name{color:#ffdd00;font-size:0.95rem;font-weight:700}
     .io-desc{color:#aaa;font-size:0.72rem;margin-top:4px}
     .io-cancel{margin-top:8px;padding:8px 2em;background:transparent;border:1px solid #555;color:#888;border-radius:4px;cursor:pointer;font-size:0.82rem}
+
+    /* ===== TRAINING EFFECTS ===== */
+    @keyframes trainFlash{0%{box-shadow:0 0 0 0 rgba(68,255,68,0)}30%{box-shadow:0 0 24px 8px rgba(68,255,68,0.7)}100%{box-shadow:0 0 0 0 rgba(68,255,68,0)}}
+    .tr-card.flash{animation:trainFlash 0.5s ease-out}
+    @keyframes statPop{0%{opacity:1;transform:translate(-50%,-50%) scale(0.6)}30%{opacity:1;transform:translate(-50%,-80%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-130%) scale(0.9)}}
+    .stat-popup{position:absolute;pointer-events:none;z-index:300;animation:statPop 1.1s ease-out forwards;white-space:nowrap;font-weight:900;font-family:monospace;text-shadow:0 0 8px currentColor}
+    @keyframes actionBurst{0%{transform:scale(1)}25%{transform:scale(1.35)}100%{transform:scale(1)}}
+    .tr-act.burst{animation:actionBurst 0.25s ease-out}
+
+    /* ===== PORTRAIT CANVAS ===== */
+    #st-portrait{border-radius:8px;border:2px solid #333;display:block}
+
+    /* ===== JAPAN MAP ===== */
+    #map-canvas{cursor:default}
+    .map-canvas-wrap{flex:1;position:relative;overflow:hidden;min-height:0}
   </style>
 </head>
 <body>
@@ -221,7 +236,9 @@
 
   <!-- STORY -->
   <div id="sc-story" class="screen">
-    <div class="story-bg" id="st-portrait"></div>
+    <div class="story-bg" style="flex:1;display:flex;align-items:center;justify-content:center;min-height:0;padding:12px">
+      <canvas id="st-portrait" width="220" height="220" style="width:min(46vw,200px);height:min(46vw,200px)"></canvas>
+    </div>
     <div class="story-box">
       <div class="story-name" id="st-name"></div>
       <div class="story-text" id="st-text"></div>
@@ -231,8 +248,10 @@
 
   <!-- MAP -->
   <div id="sc-map" class="screen">
-    <div class="map-hdr">📍 ワールドマップ</div>
-    <div class="map-list" id="map-list"></div>
+    <div class="map-hdr">🗾 ワールドマップ</div>
+    <div class="map-canvas-wrap">
+      <canvas id="map-canvas" style="width:100%;height:100%;display:block"></canvas>
+    </div>
     <div class="map-party">
       <div class="party-lbl">現在のパーティ</div>
       <div class="party-row" id="party-row"></div>
@@ -406,9 +425,9 @@ const SCENARIOS = [
     enemy:{name:'ゴロ',
       mks:[{h:'round',m:'slim'},{h:'sq',m:'micro'},{h:'slim',m:'wild'}], ai:1},
     story:[
-      {n:'ナレーター',t:'199X年。\n日本はモヒカンブームの真っ只中にあった。\n突如現れた謎の組織「モヒカン教団」が\n日本中のモヒカンを奪い去ろうと企んでいた。',p:'📖'},
-      {n:'ゴロ',t:'へっへっへ！\nお前のモヒカン、いただくぜ！',p:'😤'},
-      {n:'主人公',t:'させるか！\nモヒカンは俺の魂だ！',p:'😠'},
+      {n:'ナレーター',t:'199X年。\n日本はモヒカンブームの真っ只中にあった。\n突如現れた謎の組織「モヒカン教団」が\n日本中のモヒカンを奪い去ろうと企んでいた。',p:'narrator'},
+      {n:'ゴロ',t:'へっへっへ！\nお前のモヒカン、いただくぜ！',p:'goro'},
+      {n:'主人公',t:'させるか！\nモヒカンは俺の魂だ！',p:'player'},
     ],
     rewards:['gatsby','keb'], newMk:{h:'oval',m:'color'},
   },
@@ -417,8 +436,8 @@ const SCENARIOS = [
     enemy:{name:'キズ',
       mks:[{h:'tri',m:'big'},{h:'jaw',m:'twin'},{h:'long',m:'spiral'}], ai:2},
     story:[
-      {n:'キズ',t:'フン…ゴロをやったのか。\n俺はそう甘くないぞ！',p:'😤'},
-      {n:'主人公',t:'教団に近づくためにも\nここで勝たせてもらう！',p:'😤'},
+      {n:'キズ',t:'フン…ゴロをやったのか。\n俺はそう甘くないぞ！',p:'kizu'},
+      {n:'主人公',t:'教団に近づくためにも\nここで勝たせてもらう！',p:'player'},
     ],
     rewards:['regent','gatsby'], newMk:{h:'heart',m:'golden'},
   },
@@ -427,9 +446,9 @@ const SCENARIOS = [
     enemy:{name:'バラン幹部',
       mks:[{h:'bone',m:'wild'},{h:'baby',m:'rainbow'},{h:'round',m:'golden'}], ai:2},
     story:[
-      {n:'ナレーター',t:'ついに教団の幹部\nバランと対峙した。',p:'📖'},
-      {n:'バラン幹部',t:'フッ…よくここまで来た。\nだが私のモヒカンに\n敵う者はいない。',p:'😏'},
-      {n:'主人公',t:'日本のモヒカンを返してもらう！',p:'😠'},
+      {n:'ナレーター',t:'ついに教団の幹部\nバランと対峙した。',p:'narrator'},
+      {n:'バラン幹部',t:'フッ…よくここまで来た。\nだが私のモヒカンに\n敵う者はいない。',p:'baran'},
+      {n:'主人公',t:'日本のモヒカンを返してもらう！',p:'player'},
     ],
     rewards:['keb','gatsby','aderans'], newMk:{h:'sq',m:'black'},
   },
@@ -438,8 +457,8 @@ const SCENARIOS = [
     enemy:{name:'ダーク副頭',
       mks:[{h:'slim',m:'twin'},{h:'tri',m:'golden'},{h:'jaw',m:'rainbow'}], ai:3},
     story:[
-      {n:'ダーク副頭',t:'貴様…ここまで来るとは。\nボスには絶対に近づかせん！',p:'😈'},
-      {n:'主人公',t:'退けない！絶対に通る！',p:'😤'},
+      {n:'ダーク副頭',t:'貴様…ここまで来るとは。\nボスには絶対に近づかせん！',p:'dark'},
+      {n:'主人公',t:'退けない！絶対に通る！',p:'player'},
     ],
     rewards:['regent','aderans'], newMk:{h:'bone',m:'spiral'},
   },
@@ -448,9 +467,9 @@ const SCENARIOS = [
     enemy:{name:'キング・モヒカン',
       mks:[{h:'baby',m:'golden'},{h:'tri',m:'black'},{h:'round',m:'rainbow'}], ai:3},
     story:[
-      {n:'ナレーター',t:'ついに教団のボス\nキング・モヒカンと対峙した！',p:'📖'},
-      {n:'キング・モヒカン',t:'…よく来た。だが私の前では\nすべてが無力だ！',p:'😈'},
-      {n:'主人公',t:'日本のモヒカンを取り戻す！\nここで終わらせる！',p:'😤'},
+      {n:'ナレーター',t:'ついに教団のボス\nキング・モヒカンと対峙した！',p:'narrator'},
+      {n:'キング・モヒカン',t:'…よく来た。だが私の前では\nすべてが無力だ！',p:'king'},
+      {n:'主人公',t:'日本のモヒカンを取り戻す！\nここで終わらせる！',p:'player'},
     ],
     rewards:[], isFinal:true,
   },
@@ -588,73 +607,100 @@ function drawMohawkSpike(ctx, x, topY, mid, facing){
 function drawChar(ctx, ch, isP){
   const x = ch.x;
   const gy = 165;
-  const fl = ch.facing < 0;
   const m = ch.mohawk;
   const state = ch.state;
 
   ctx.save();
-  if(fl){ctx.translate(x*2,0);ctx.scale(-1,1);}
 
-  // Shadow
+  // フリップ（左向き）
+  if(ch.facing < 0){ctx.translate(x*2,0);ctx.scale(-1,1);}
+
+  // 影
   ctx.fillStyle='rgba(0,0,0,0.25)';
   ctx.beginPath();ctx.ellipse(x,gy+1,18,4,0,0,Math.PI*2);ctx.fill();
 
-  // Flash on hit
-  if(state==='hit'||state==='ko'){ctx.globalAlpha=0.6+Math.random()*0.4;}
+  // ヒット時フラッシュ
+  if(state==='hit'||state==='ko') ctx.globalAlpha=0.55+Math.random()*0.45;
 
-  // Legs
+  // 攻撃/必殺技: 体全体を前傾（モヒカンが武器として前に出る）
+  const isAtk = state==='atk'||state==='sp';
+  const leanAngle = state==='sp' ? 0.42 : state==='atk' ? 0.28 : 0;
+
+  if(isAtk){
+    // 足元を軸に前傾
+    ctx.translate(x, gy);
+    ctx.rotate(leanAngle);
+    ctx.translate(-x, -gy);
+
+    // 攻撃スウィングトレイル
+    const trailCol = m.m.col||'#fff';
+    ctx.save();
+    ctx.globalAlpha=0.35;
+    ctx.strokeStyle=trailCol;
+    ctx.lineWidth=state==='sp'?5:3;
+    ctx.beginPath();
+    const r=state==='sp'?70:50;
+    ctx.arc(x,gy-60, r, -Math.PI*0.85,-Math.PI*0.15);
+    ctx.stroke();
+    // 先端光
+    ctx.globalAlpha=0.6;
+    ctx.fillStyle=trailCol;
+    const tipX=x+Math.cos(-Math.PI*0.15)*r;
+    const tipY=(gy-60)+Math.sin(-Math.PI*0.15)*r;
+    ctx.beginPath();ctx.arc(tipX,tipY,state==='sp'?8:5,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
+
+  // 足
   const legC = isP?'#1565C0':'#6A1B9A';
   ctx.fillStyle = legC;
-  if(state==='atk'||state==='sp'){
+  if(isAtk){
+    // 踏み込み足
     ctx.fillRect(x-14,gy-28,11,28);
     ctx.fillRect(x+3,gy-22,11,22);
   } else if(state==='def'){
-    ctx.fillRect(x-11,gy-28,9,28);
-    ctx.fillRect(x+2,gy-28,9,28);
+    // ガード: 重心低め
+    ctx.fillRect(x-13,gy-24,11,24);
+    ctx.fillRect(x+2,gy-24,11,24);
   } else {
     ctx.fillRect(x-11,gy-28,10,28);
     ctx.fillRect(x+1,gy-28,10,28);
   }
 
-  // Body
+  // 胴体
   const bodyC = isP?'#2E7D32':'#B71C1C';
   ctx.fillStyle = bodyC;
   ctx.fillRect(x-14,gy-60,28,32);
 
-  // Arms
-  ctx.fillStyle = bodyC;
-  if(state==='atk'){
-    ctx.fillRect(x+14,gy-57,28,9);
-    ctx.fillStyle=m.h.col||'#FFCC80';
-    ctx.fillRect(x+42,gy-60,12,12);
-    ctx.fillStyle=legC;
-    ctx.fillRect(x-22,gy-58,8,20);
-  } else if(state==='sp'){
-    ctx.fillRect(x+14,gy-55,32,9);
-    ctx.fillStyle=m.h.col||'#FFCC80';
-    ctx.fillRect(x+46,gy-60,14,14);
-    ctx.fillStyle=legC;
-    ctx.fillRect(x-24,gy-56,8,22);
-  } else if(state==='def'){
-    ctx.fillRect(x-22,gy-65,8,30);
-    ctx.fillRect(x+14,gy-65,8,30);
+  // 腕（防御時はクロスガード）
+  if(state==='def'){
+    ctx.fillStyle=bodyC;
+    ctx.fillRect(x-24,gy-68,9,32);
+    ctx.fillRect(x+15,gy-68,9,32);
+    // ガードシールド（腕で顔を守る）
+    ctx.fillStyle='rgba(68,68,255,0.35)';
+    ctx.beginPath();ctx.ellipse(x,gy-62,20,18,0,0,Math.PI*2);ctx.fill();
+  } else if(isAtk){
+    ctx.fillStyle=bodyC;
+    // 後ろ腕
+    ctx.fillRect(x-24,gy-58,8,18);
   } else {
+    ctx.fillStyle=bodyC;
     ctx.fillRect(x-22,gy-58,7,20);
     ctx.fillRect(x+15,gy-58,7,20);
   }
 
-  // Head
-  const headW = 22;
-  const headH = 22;
+  // 頭
+  const headW = 22, headH = 22;
   const headTopY = gy-60-headH;
   ctx.fillStyle = m.h.col||'#FFCC80';
   ctx.fillRect(x-headW/2, headTopY, headW, headH);
 
-  // Eyes
+  // 目
   if(state==='ko'){
-    ctx.fillStyle='#555';
-    ctx.fillText('×',x-7,headTopY+13);
-    ctx.fillText('×',x+3,headTopY+13);
+    ctx.fillStyle='#555';ctx.font='10px monospace';ctx.textAlign='center';
+    ctx.fillText('×',x-5,headTopY+14);
+    ctx.fillText('×',x+5,headTopY+14);
   } else if(state==='hit'){
     ctx.fillStyle='#000';
     ctx.fillRect(x-7,headTopY+8,4,3);
@@ -663,14 +709,21 @@ function drawChar(ctx, ch, isP){
     ctx.fillStyle='#000';
     ctx.fillRect(x-7,headTopY+7,4,5);
     ctx.fillRect(x+3,headTopY+7,4,5);
-    // Eyebrow
     ctx.fillStyle=isP?'#1B5E20':'#7B1FA2';
     ctx.fillRect(x-8,headTopY+4,5,2);
     ctx.fillRect(x+3,headTopY+4,5,2);
   }
 
-  // Mohawk
-  drawMohawkSpike(ctx, x, headTopY, m.m, ch.facing);
+  // モヒカン（必殺技時は発光）
+  if(state==='sp'){
+    ctx.save();
+    ctx.shadowColor=m.m.col||'#ff44ff';
+    ctx.shadowBlur=16;
+    drawMohawkSpike(ctx, x, headTopY, m.m, ch.facing);
+    ctx.restore();
+  } else {
+    drawMohawkSpike(ctx, x, headTopY, m.m, ch.facing);
+  }
 
   ctx.globalAlpha=1;
   ctx.restore();
@@ -719,7 +772,298 @@ function drawEffect(ctx, e){
   ctx.restore();
 }
 
+// ============================================================
+// PORTRAIT DRAWING
+// ============================================================
+
+const PORTRAIT_DATA = {
+  narrator:{bg0:'#08041a',bg1:'#140a30',face:'#c8a878',body:'#2a1555',hair:'#885533',mohawk:'big',mohawkCol:'#7744aa'},
+  player:  {bg0:'#021002',bg1:'#04260a',face:'#ffcc88',body:'#1a5a20',hair:'#22cc44',mohawk:'color',mohawkCol:'#44ff44'},
+  goro:    {bg0:'#140404',bg1:'#240a0a',face:'#e0a060',body:'#2a1400',hair:'#886600',mohawk:'micro',mohawkCol:'#aa8800'},
+  kizu:    {bg0:'#160000',bg1:'#2c0000',face:'#dd9858',body:'#520000',hair:'#dd2200',mohawk:'wild', mohawkCol:'#ff3300',scar:true},
+  baran:   {bg0:'#000018',bg1:'#000830',face:'#e8cc90',body:'#003055',hair:'#111111',mohawk:'black',mohawkCol:'#334455',suit:true},
+  dark:    {bg0:'#000000',bg1:'#080010',face:'#a89080',body:'#080008',hair:'#1a1a1a',mohawk:'black',mohawkCol:'#222233',red:true},
+  king:    {bg0:'#120c00',bg1:'#241800',face:'#f0c860',body:'#382000',hair:'#cc9900',mohawk:'golden',mohawkCol:'#ffd600',crown:true},
+};
+
+function drawPortrait(canvasId, charId){
+  const cv = document.getElementById(canvasId);
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  const d = PORTRAIT_DATA[charId] || PORTRAIT_DATA.narrator;
+
+  // Background
+  const gr = ctx.createLinearGradient(0,0,0,H);
+  gr.addColorStop(0, d.bg0); gr.addColorStop(1, d.bg1);
+  ctx.fillStyle = gr; ctx.fillRect(0,0,W,H);
+  // Subtle scanlines
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  for(let y=0;y<H;y+=3) ctx.fillRect(0,y,W,1);
+
+  const cx = W/2, fy = H*0.60;
+  const fw = W*0.42, fh = H*0.36;
+
+  // Shoulders / body
+  ctx.fillStyle = d.body;
+  ctx.beginPath();
+  ctx.moveTo(cx-fw*2.0, H+4);
+  ctx.lineTo(cx-fw*0.55, fy+fh*0.55);
+  ctx.lineTo(cx+fw*0.55, fy+fh*0.55);
+  ctx.lineTo(cx+fw*2.0, H+4);
+  ctx.closePath(); ctx.fill();
+  // Collar/neck
+  ctx.fillStyle = d.face;
+  ctx.fillRect(cx-fw*0.18, fy+fh*0.4, fw*0.36, fh*0.3);
+
+  // Face (rounded rect)
+  ctx.fillStyle = d.face;
+  ctx.beginPath();
+  ctx.roundRect(cx-fw/2, fy-fh/2, fw, fh, fw*0.12);
+  ctx.fill();
+  // Ears
+  ctx.fillRect(cx-fw/2-5, fy-fh*0.08, 7, fh*0.28);
+  ctx.fillRect(cx+fw/2-2, fy-fh*0.08, 7, fh*0.28);
+
+  // Mohawk (scaled up)
+  const mohawkObj = MOHAWKS.find(m=>m.id===d.mohawk) || MOHAWKS[0];
+  const fakeMohawk = {...mohawkObj, col: d.mohawkCol};
+  const topY = fy - fh/2;
+  ctx.save();
+  ctx.translate(cx, topY);
+  ctx.scale(2.5, 2.5);
+  ctx.translate(-cx, -topY);
+  drawMohawkSpike(ctx, cx, topY, fakeMohawk, 1);
+  ctx.restore();
+
+  // Eyes
+  const ey = fy - fh*0.05;
+  const ex1 = cx - fw*0.22, ex2 = cx + fw*0.22;
+  ctx.fillStyle = '#fff';
+  const ew = fw*0.13, eh = fh*0.11;
+  [[ex1,ey],[ex2,ey]].forEach(([x,y])=>{
+    ctx.beginPath(); ctx.ellipse(x,y,ew,eh,0,0,Math.PI*2); ctx.fill();
+  });
+  // Pupils
+  if(d.red){
+    ctx.fillStyle='#cc0000';
+    [[ex1,ey],[ex2,ey]].forEach(([x,y])=>{
+      ctx.beginPath();ctx.ellipse(x,y,ew*0.65,eh*0.75,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='rgba(255,0,0,0.3)';
+      ctx.beginPath();ctx.ellipse(x,y,ew*1.2,eh*1.2,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#cc0000';
+    });
+  } else {
+    ctx.fillStyle = '#111';
+    const pw = charId==='baran'||charId==='king' ? eh*0.55 : eh*0.75;
+    [[ex1,ey],[ex2,ey]].forEach(([x,y])=>{
+      ctx.beginPath();ctx.ellipse(x,y,ew*0.6,pw,0,0,Math.PI*2);ctx.fill();
+    });
+  }
+  // Highlight dots
+  ctx.fillStyle='rgba(255,255,255,0.7)';
+  [[ex1-ew*0.2,ey-eh*0.25],[ex2-ew*0.2,ey-eh*0.25]].forEach(([x,y])=>{
+    ctx.beginPath();ctx.arc(x,y,ew*0.18,0,Math.PI*2);ctx.fill();
+  });
+
+  // Eyebrows
+  ctx.strokeStyle = d.hair; ctx.lineCap='round';
+  const bw = fw*0.24, by = ey-fh*0.13;
+  if(charId==='player'||charId==='goro'||charId==='kizu'){
+    ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(ex1-bw/2,by);ctx.lineTo(ex1+bw/2,by+fh*0.05);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(ex2+bw/2,by);ctx.lineTo(ex2-bw/2,by+fh*0.05);ctx.stroke();
+  } else if(charId==='king'){
+    ctx.lineWidth=4;
+    ctx.beginPath();ctx.moveTo(ex1-bw/2,by+fh*0.04);ctx.lineTo(ex1+bw/2,by);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(ex2-bw/2,by);ctx.lineTo(ex2+bw/2,by+fh*0.04);ctx.stroke();
+  } else {
+    ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(ex1-bw/2,by);ctx.lineTo(ex1+bw/2,by);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(ex2-bw/2,by);ctx.lineTo(ex2+bw/2,by);ctx.stroke();
+  }
+
+  // Nose
+  ctx.strokeStyle='rgba(0,0,0,0.25)'; ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(cx,fy+fh*0.07,fw*0.055,0,Math.PI);ctx.stroke();
+
+  // Mouth
+  ctx.strokeStyle='#222'; ctx.lineWidth=2.5;
+  const my = fy+fh*0.22;
+  if(charId==='goro'||charId==='kizu'){
+    ctx.beginPath();ctx.moveTo(cx-fw*0.12,my);ctx.quadraticCurveTo(cx,my+fh*0.08,cx+fw*0.16,my-fh*0.03);ctx.stroke();
+  } else if(charId==='baran'){
+    ctx.beginPath();ctx.moveTo(cx-fw*0.1,my);ctx.quadraticCurveTo(cx+fw*0.06,my+fh*0.07,cx+fw*0.14,my-fh*0.02);ctx.stroke();
+  } else if(charId==='dark'){
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(cx-fw*0.15,my-fh*0.02,fw*0.3,fh*0.1,3);ctx.fill();
+    ctx.strokeStyle='#444';ctx.beginPath();ctx.roundRect(cx-fw*0.15,my-fh*0.02,fw*0.3,fh*0.1,3);ctx.stroke();
+    ctx.strokeStyle='#888';ctx.lineWidth=1;
+    [-fw*0.05,fw*0.05].forEach(ox=>{ctx.beginPath();ctx.moveTo(cx+ox,my-fh*0.02);ctx.lineTo(cx+ox,my+fh*0.08);ctx.stroke();});
+  } else if(charId==='king'){
+    ctx.fillStyle='#aa0000';
+    ctx.beginPath();ctx.moveTo(cx-fw*0.18,my-fh*0.01);ctx.quadraticCurveTo(cx,my+fh*0.14,cx+fw*0.18,my-fh*0.01);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(cx-fw*0.14,my,fw*0.28,fh*0.07,2);ctx.fill();
+  } else {
+    ctx.beginPath();ctx.moveTo(cx-fw*0.13,my);ctx.lineTo(cx+fw*0.13,my);ctx.stroke();
+  }
+
+  // Extra: scar
+  if(d.scar){
+    ctx.strokeStyle='#cc4455';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(cx-fw*0.08,ey-fh*0.06);ctx.lineTo(cx-fw*0.22,fy+fh*0.14);ctx.stroke();
+  }
+  // Extra: king crown on shoulders
+  if(d.crown){
+    ctx.fillStyle='#ffd600';
+    const pts=[[cx-fw*0.6,fy-fh*0.42],[cx-fw*0.38,fy-fh*0.58],[cx-fw*0.18,fy-fh*0.42],[cx+fw*0.18,fy-fh*0.42],[cx+fw*0.38,fy-fh*0.58],[cx+fw*0.6,fy-fh*0.42]];
+    ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);pts.forEach(p=>ctx.lineTo(p[0],p[1]));ctx.closePath();ctx.fill();
+  }
+  // Extra: suit collar
+  if(d.suit){
+    ctx.fillStyle=d.body;
+    ctx.beginPath();ctx.moveTo(cx-fw*0.25,fy+fh*0.4);ctx.lineTo(cx-fw*0.1,fy+fh*0.55);ctx.lineTo(cx,fy+fh*0.45);ctx.lineTo(cx+fw*0.1,fy+fh*0.55);ctx.lineTo(cx+fw*0.25,fy+fh*0.4);ctx.stroke();
+    ctx.fillStyle='#eee';
+    ctx.beginPath();ctx.moveTo(cx-fw*0.08,fy+fh*0.42);ctx.lineTo(cx,fy+fh*0.5);ctx.lineTo(cx+fw*0.08,fy+fh*0.42);ctx.fill();
+  }
+  // Narrator: book overlay
+  if(charId==='narrator'){
+    ctx.fillStyle='rgba(80,40,10,0.7)';
+    ctx.fillRect(cx-fw*0.45,fy+fh*0.05,fw*0.9,fh*0.5);
+    ctx.fillStyle='rgba(240,230,200,0.85)';
+    ctx.fillRect(cx-fw*0.42,fy+fh*0.08,fw*0.39,fh*0.44);
+    ctx.fillRect(cx+fw*0.03,fy+fh*0.08,fw*0.39,fh*0.44);
+    ctx.fillStyle='rgba(0,0,0,0.15)';
+    for(let i=0;i<4;i++) ctx.fillRect(cx-fw*0.38,fy+fh*0.15+i*fh*0.09,fw*0.3,fh*0.04);
+    ctx.fillStyle='#ff9900';ctx.font=`bold ${Math.floor(fw*0.22)}px monospace`;ctx.textAlign='center';
+    ctx.fillText('199X',cx+fw*0.22,fy+fh*0.42);
+  }
+}
+
+// ============================================================
+// JAPAN MAP DRAWING
+// ============================================================
+
+const JAPAN_POLY = {
+  hokkaido:[
+    [227,28],[243,22],[260,28],[272,38],[276,50],[268,60],[253,63],[235,61],[220,70],[213,78],[207,68],[210,53],[213,42],[218,35]
+  ],
+  honshu:[
+    [208,44],[213,36],[222,32],[217,25],
+    [205,50],[208,60],[213,70],
+    [218,82],[222,102],[227,120],[231,133],[229,144],
+    [236,150],[246,154],[250,158],[240,160],[226,157],[212,154],
+    [197,153],[181,155],[167,160],[152,164],[138,167],[124,172],
+    [110,174],[97,173],[90,169],
+    [88,163],[93,152],[100,142],[110,131],[118,121],[124,112],
+    [130,104],[134,96],[140,88],[150,81],[163,77],[176,72],[190,67],[198,62],[204,51]
+  ],
+  shikoku:[
+    [146,174],[167,169],[188,170],[208,173],[218,183],[212,194],[194,200],[174,202],[155,196],[143,187]
+  ],
+  kyushu:[
+    [90,172],[112,169],[128,174],[137,186],[133,202],[118,214],[100,218],[81,215],[66,203],[63,188],[70,176]
+  ]
+};
+
+// シナリオノードの地図上座標
+const MAP_NODES = [
+  {scn:0, city:'東京',   x:229, y:132},
+  {scn:1, city:'名古屋', x:190, y:148},
+  {scn:2, city:'大阪',   x:162, y:157},
+  {scn:3, city:'福岡',   x:90,  y:173},
+  {scn:4, city:'札幌',   x:224, y:44},
+];
+
+function drawJapanMap(canvas){
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  // Ocean background
+  const sea = ctx.createLinearGradient(0,0,W,H);
+  sea.addColorStop(0,'#050a1a'); sea.addColorStop(1,'#08142a');
+  ctx.fillStyle=sea; ctx.fillRect(0,0,W,H);
+
+  // Wave texture (subtle)
+  ctx.strokeStyle='rgba(30,60,120,0.3)'; ctx.lineWidth=1;
+  for(let y=10;y<H;y+=14){
+    ctx.beginPath();ctx.moveTo(0,y);
+    for(let x=0;x<W;x+=20) ctx.quadraticCurveTo(x+10,y-3,x+20,y);
+    ctx.stroke();
+  }
+
+  // Scale to canvas (designed for ~300×220 logical coords)
+  const sx = W/320, sy = H/235;
+  ctx.save();
+  ctx.scale(sx,sy);
+
+  // Island fill
+  function drawIsland(pts, glowColor){
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0],pts[0][1]);
+    pts.forEach(p=>ctx.lineTo(p[0],p[1]));
+    ctx.closePath();
+    ctx.fillStyle='#1a2a18'; ctx.fill();
+    ctx.strokeStyle='#2a4a25'; ctx.lineWidth=1.5/sx; ctx.stroke();
+  }
+  drawIsland(JAPAN_POLY.honshu);
+  drawIsland(JAPAN_POLY.hokkaido);
+  drawIsland(JAPAN_POLY.shikoku);
+  drawIsland(JAPAN_POLY.kyushu);
+
+  ctx.restore();
+
+  // Route line connecting nodes (in canvas coords)
+  const order=[4,0,1,2,3]; // Sapporo→Tokyo→Nagoya→Osaka→Fukuoka
+  ctx.strokeStyle='rgba(255,153,0,0.25)';ctx.lineWidth=2;ctx.setLineDash([4,5]);
+  ctx.beginPath();
+  order.forEach((si,i)=>{
+    const n=MAP_NODES[si];
+    const cx2=n.x/320*W, cy2=n.y/235*H;
+    i===0?ctx.moveTo(cx2,cy2):ctx.lineTo(cx2,cy2);
+  });
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // Nodes
+  MAP_NODES.forEach(n=>{
+    const nx=n.x/320*W, ny=n.y/235*H;
+    const sc=SCENARIOS[n.scn];
+    const st=n.scn<state.scn?'done':n.scn===state.scn?'avail':'lock';
+
+    // Glow for available
+    if(st==='avail'){
+      ctx.fillStyle='rgba(255,51,0,0.15)';
+      ctx.beginPath();ctx.arc(nx,ny,18,0,Math.PI*2);ctx.fill();
+    }
+
+    // Pin circle
+    const col=st==='done'?'#44884a':st==='avail'?'#ff3300':'#555';
+    ctx.fillStyle=col;
+    ctx.beginPath();ctx.arc(nx,ny,st==='avail'?9:7,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(nx,ny,st==='avail'?9:7,0,Math.PI*2);ctx.stroke();
+
+    // Icon inside
+    ctx.fillStyle='#fff';ctx.font=`bold ${st==='avail'?11:9}px monospace`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(st==='done'?'✓':String(n.scn+1),nx,ny);
+
+    // Label
+    ctx.fillStyle=st==='lock'?'#555':st==='avail'?'#ff9900':'#aaa';
+    ctx.font=`bold ${st==='avail'?11:9}px monospace`;ctx.textAlign='center';ctx.textBaseline='top';
+    ctx.fillText(n.city,nx,ny+(st==='avail'?11:9));
+    if(st==='avail'){
+      ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(nx-38,ny+23,76,14);
+      ctx.fillStyle='#ff9900';ctx.font='9px monospace';
+      ctx.fillText(sc.name,nx,ny+25);
+    }
+  });
+  ctx.textBaseline='alphabetic';
+}
+
+// ============================================================
 // Draw mohawk preview on small canvas
+// ============================================================
 function drawPreview(canvasId, mk){
   const cv = document.getElementById(canvasId);
   if(!cv) return;
@@ -803,17 +1147,28 @@ const G = {
   },
 
   renderMap(){
-    const list = document.getElementById('map-list');
-    list.innerHTML = '';
-    SCENARIOS.forEach((s,i)=>{
-      const st = i < state.scn ? 'done' : i===state.scn ? 'avail' : 'lock';
-      const node = document.createElement('div');
-      node.className = `map-node ${st}`;
-      node.innerHTML = `<div class="nd-icon">${s.icon}</div><div class="nd-info"><div class="nd-name">${s.name}</div><div class="nd-sub">${s.sub}</div></div><div class="nd-st">${st==='done'?'✅ クリア':st==='avail'?'▶ 挑戦':'🔒'}</div>`;
-      if(st==='avail') node.onclick=()=>G.startScenario(i);
-      list.appendChild(node);
-    });
-    // Party
+    // Canvasサイズ設定
+    const wrap = document.querySelector('.map-canvas-wrap');
+    const cv = document.getElementById('map-canvas');
+    if(wrap){
+      cv.width = wrap.clientWidth || 360;
+      cv.height = wrap.clientHeight || 220;
+    }
+    drawJapanMap(cv);
+
+    // Canvas click → シナリオ開始
+    cv.onclick = (e)=>{
+      const rect = cv.getBoundingClientRect();
+      const mx = (e.clientX-rect.left)*(cv.width/rect.width);
+      const my = (e.clientY-rect.top)*(cv.height/rect.height);
+      MAP_NODES.forEach(n=>{
+        if(n.scn!==state.scn) return;
+        const nx=n.x/320*cv.width, ny=n.y/235*cv.height;
+        if(Math.hypot(mx-nx,my-ny)<22) G.startScenario(n.scn);
+      });
+    };
+
+    // Party row
     const pr = document.getElementById('party-row');
     pr.innerHTML = '';
     if(state.sel.length>0){
@@ -822,7 +1177,7 @@ const G = {
         pr.innerHTML += `<div class="pc"><div class="pc-n">${m.name}</div><div class="pc-h">HP${m.hp}</div></div>`;
       });
     } else {
-      pr.innerHTML = '<div style="color:#444;font-size:0.75rem">対戦が決まると選択できます</div>';
+      pr.innerHTML = '<div style="color:#444;font-size:0.75rem">マップの光るピンをタップして挑戦</div>';
     }
   },
 
@@ -846,7 +1201,7 @@ const G = {
       if(li>=lines.length){ scr.onclick=null; cb(); return; }
       const ln=lines[li];
       document.getElementById('st-name').textContent=ln.n;
-      document.getElementById('st-portrait').textContent=ln.p||'';
+      drawPortrait('st-portrait', ln.p||'narrator');
       document.getElementById('st-text').textContent='';
       clearInterval(iv);
       ci=0;
@@ -970,14 +1325,45 @@ const G = {
     });
   },
 
+  showTrainEffect(cardIdx, changes){
+    // カードフラッシュ
+    const cards = document.querySelectorAll('.tr-card');
+    const card = cards[cardIdx];
+    if(card){
+      card.classList.remove('flash');
+      void card.offsetWidth;
+      card.classList.add('flash');
+      card.addEventListener('animationend',()=>card.classList.remove('flash'),{once:true});
+      // カード上でスタット数値ポップアップ
+      const rect = card.getBoundingClientRect();
+      const gameRect = document.getElementById('game').getBoundingClientRect();
+      const ox = rect.left - gameRect.left + rect.width/2;
+      let oy = rect.top - gameRect.top + rect.height/2;
+      const cols = {a:'#ff5555',d:'#5588ff',s:'#55ff88',h:'#ffaa44'};
+      const labels = {a:'ATK',d:'DEF',s:'STA',h:'HP'};
+      Object.entries(changes).forEach(([k,v],i)=>{
+        if(!v) return;
+        const el = document.createElement('div');
+        el.className = 'stat-popup';
+        el.style.cssText = `left:${ox}px;top:${oy - i*20}px;color:${v>0?cols[k]:'#ff8888'};font-size:${Math.abs(v)>=6?'1.1rem':'0.9rem'}`;
+        el.textContent = `${labels[k]} ${v>0?'+':''}${v}`;
+        document.getElementById('game').appendChild(el);
+        setTimeout(()=>el.remove(), 1200);
+      });
+    }
+  },
+
   doTrain(a){
     if(state.trn.left<=0)return;
     const m=state.inv.mks[state.sel[state.trn.idx]];
+    const before={atk:m.atk,def:m.def,sta:m.sta,hp:m.hp};
     m.atk=Math.max(1,m.atk+(a.a||0));
     m.def=Math.max(1,m.def+(a.d||0));
     m.sta=Math.max(1,m.sta+(a.s||0));
     m.hp =Math.max(10,m.hp+(a.h||0));
     state.trn.left--;
+    // エフェクト表示
+    G.showTrainEffect(state.trn.idx, {a:m.atk-before.atk,d:m.def-before.def,s:m.sta-before.sta,h:m.hp-before.hp});
     // Log
     const lg=document.getElementById('tr-log');
     let html=`<div class="lg">${m.name}が${a.name}を行った！ `;
@@ -1016,6 +1402,7 @@ const G = {
   useItem(i){
     const it=state.inv.items[i];
     const m=state.inv.mks[state.sel[state.trn.idx]];
+    const before={atk:m.atk,def:m.def,sta:m.sta,hp:m.hp};
     if(it.restore){
       m.atk=Math.max(m.atk,m.ba); m.def=Math.max(m.def,m.bd);
       m.sta=Math.max(m.sta,m.bs); m.hp=Math.max(m.hp,m.bh);
@@ -1025,6 +1412,7 @@ const G = {
     }
     state.inv.items.splice(i,1);
     state.trn.left--;
+    G.showTrainEffect(state.trn.idx, {a:m.atk-before.atk,d:m.def-before.def,s:m.sta-before.sta,h:m.hp-before.hp});
     const lg=document.getElementById('tr-log');
     lg.innerHTML+=`<div class="lg">${m.name}が<span style="color:#ffdd00">${it.icon}${it.name}</span>を使った！</div>`;
     lg.scrollTop=99999;
